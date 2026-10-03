@@ -35,9 +35,9 @@ API key logins have no plan limits, so there is nothing to show for them.
 
 ## Installation
 
-### Why it is not on extensions.gnome.org
+### From extensions.gnome.org
 
-I have decided not to upload this extension to
+Not available. I have decided not to upload this extension to
 [extensions.gnome.org](https://extensions.gnome.org). Its
 [review guidelines](https://gjs.guide/extensions/review-guidelines/review-guidelines.html)
 say:
