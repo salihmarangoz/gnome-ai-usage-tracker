@@ -1,7 +1,7 @@
 # Architecture
 
 ```
-GLib timeout per service              Refresh menu item
+GLib timeout per service              Refresh Now menu item
 (<id>-refresh-interval)                 (all services)
               \                        /
                UsageIndicator._refresh(providers)

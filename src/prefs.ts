@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Gtk from 'gi://Gtk';
 
@@ -15,20 +16,27 @@ const SHOW_CHOICES: Choices = [
     ['off', 'Disabled'],
 ];
 
-const ICON_STYLE_CHOICES: Choices = [
-    ['gauge', 'Gauge'],
-    ['bars', 'Bars'],
-];
-
 const DISPLAY_CHOICES: Choices = [
     ['usage', 'Usage'],
     ['remaining', 'Remaining'],
+];
+
+const LIMITS_CHOICES: Choices = [
+    ['both', '5-hour and Weekly'],
+    ['short', '5-hour Only'],
+    ['long', 'Weekly Only'],
 ];
 
 const SERVICES = [
     {id: 'claude', title: 'Claude Code', file: '~/.claude/.credentials.json'},
     {id: 'codex', title: 'Codex', file: '~/.codex/auth.json'},
 ];
+
+// The allowed range of a number setting lives in the schema
+function keyRange(settings: Gio.Settings, key: string): [number, number] {
+    const [, range] = settings.settings_schema.get_key(key).get_range().recursiveUnpack() as [string, [number, number]];
+    return range;
+}
 
 function comboRow(settings: Gio.Settings, key: string, choices: Choices, title: string, subtitle = ''): Adw.ComboRow {
     const row = new Adw.ComboRow({
@@ -41,10 +49,14 @@ function comboRow(settings: Gio.Settings, key: string, choices: Choices, title: 
     return row;
 }
 
+function switchRow(settings: Gio.Settings, key: string, title: string, subtitle = ''): Adw.SwitchRow {
+    const row = new Adw.SwitchRow({title, subtitle});
+    settings.bind(key, row, 'active', Gio.SettingsBindFlags.DEFAULT);
+    return row;
+}
+
 function intervalRow(settings: Gio.Settings, key: string): Adw.SpinRow {
-    // The allowed range lives in the schema
-    const range = settings.settings_schema.get_key(key).get_range().recursiveUnpack() as [string, [number, number]];
-    const [, [min, max]] = range;
+    const [min, max] = keyRange(settings, key);
     const row = Adw.SpinRow.new_with_range(min, max, 1);
     row.title = 'Refresh Interval';
     row.subtitle = `Minutes between updates, ${min} to ${max}`;
@@ -52,11 +64,52 @@ function intervalRow(settings: Gio.Settings, key: string): Adw.SpinRow {
     return row;
 }
 
+function sliderRow(settings: Gio.Settings, key: string, title: string): Adw.ActionRow {
+    const [min, max] = keyRange(settings, key);
+    const slider = new Gtk.Scale({
+        adjustment: new Gtk.Adjustment({lower: min, upper: max, step_increment: 1}),
+        round_digits: 0,
+        digits: 0,
+        draw_value: true,
+        value_pos: Gtk.PositionType.RIGHT,
+        hexpand: true,
+        valign: Gtk.Align.CENTER,
+    });
+    settings.bind(key, slider.adjustment, 'value', Gio.SettingsBindFlags.DEFAULT);
+    const row = new Adw.ActionRow({title, subtitle: 'Pixels'});
+    row.add_suffix(slider);
+    return row;
+}
+
+function colorRow(settings: Gio.Settings, key: string): Adw.ActionRow {
+    const rgba = new Gdk.RGBA();
+    rgba.parse(settings.get_string(key));
+    const button = new Gtk.ColorDialogButton({
+        dialog: new Gtk.ColorDialog({with_alpha: false}),
+        rgba,
+        valign: Gtk.Align.CENTER,
+    });
+    button.connect('notify::rgba', () => settings.set_string(key, button.rgba.to_string()));
+    const row = new Adw.ActionRow({
+        title: 'Color',
+        subtitle: 'Bars turn yellow at 70% and red at 90% used',
+        activatable_widget: button,
+    });
+    row.add_suffix(button);
+    return row;
+}
+
 export default class AiUsagePreferences extends ExtensionPreferences {
     override async fillPreferencesWindow(window: Adw.PreferencesWindow) {
         const settings = this.getSettings();
-        const page = new Adw.PreferencesPage();
+        window.add(this._servicesPage(settings));
+        window.add(this._appearancePage(settings));
+        window.add(this._aboutPage(window));
+        window.set_default_size(640, 860);
+    }
 
+    private _servicesPage(settings: Gio.Settings): Adw.PreferencesPage {
+        const page = new Adw.PreferencesPage({title: 'Services', icon_name: 'network-server-symbolic'});
         for (const {id, title, file} of SERVICES) {
             const group = new Adw.PreferencesGroup({title, description: `Uses the login in ${file}`});
             group.add(comboRow(settings, `${id}-show`, SHOW_CHOICES, 'Show'));
@@ -65,40 +118,42 @@ export default class AiUsagePreferences extends ExtensionPreferences {
             group.add(intervalRow(settings, `${id}-refresh-interval`));
             page.add(group);
         }
-
-        page.add(this._generalGroup(settings));
-        page.add(this._aboutGroup(window));
-        window.add(page);
-        window.set_default_size(640, 1040);
+        return page;
     }
 
-    private _generalGroup(settings: Gio.Settings): Adw.PreferencesGroup {
-        const group = new Adw.PreferencesGroup({title: 'General'});
+    private _appearancePage(settings: Gio.Settings): Adw.PreferencesPage {
+        const page = new Adw.PreferencesPage({title: 'Appearance', icon_name: 'applications-graphics-symbolic'});
 
-        const icon = new Adw.SwitchRow({
-            title: 'Show Icon',
-            subtitle: 'Always shown when the top bar has nothing else to show',
-        });
-        settings.bind('show-icon', icon, 'active', Gio.SettingsBindFlags.DEFAULT);
-        group.add(icon);
+        const topBar = new Adw.PreferencesGroup({title: 'Top Bar'});
+        topBar.add(switchRow(settings, 'show-bars', 'Show Bars',
+            'One small bar per limit, the 5-hour limit on top'));
+        topBar.add(sliderRow(settings, 'bar-length', 'Bar Length'));
+        topBar.add(sliderRow(settings, 'bar-thickness', 'Bar Thickness'));
+        topBar.add(switchRow(settings, 'show-app-icon', 'Show App Icon',
+            'A gauge, always shown when the top bar has nothing else to show'));
+        page.add(topBar);
 
-        const style = comboRow(settings, 'icon-style', ICON_STYLE_CHOICES, 'Icon Style',
-            'Bars: 5-hour limit on top, weekly below, for each service');
-        settings.bind('show-icon', style, 'sensitive', Gio.SettingsBindFlags.GET);
-        group.add(style);
-
-        return group;
+        for (const {id, title} of SERVICES) {
+            const group = new Adw.PreferencesGroup({title});
+            group.add(comboRow(settings, `${id}-panel-limits`, LIMITS_CHOICES, 'Top Bar Limits'));
+            group.add(switchRow(settings, `${id}-show-name`, 'Show Name', 'Name next to the numbers in the top bar'));
+            group.add(colorRow(settings, `${id}-color`));
+            page.add(group);
+        }
+        return page;
     }
 
-    private _aboutGroup(window: Adw.PreferencesWindow): Adw.PreferencesGroup {
+    private _aboutPage(window: Adw.PreferencesWindow): Adw.PreferencesPage {
+        const page = new Adw.PreferencesPage({title: 'About', icon_name: 'help-about-symbolic'});
         const group = new Adw.PreferencesGroup({
-            title: 'About',
+            title: this.metadata.name,
             description: `Version ${this.metadata['version-name']}. Not affiliated with Anthropic or OpenAI.`,
         });
+        page.add(group);
 
         const url = this.metadata.url;
         if (!url)
-            return group;
+            return page;
 
         const links: [string, string, string?][] = [
             ['Source Code', url],
@@ -112,7 +167,6 @@ export default class AiUsagePreferences extends ExtensionPreferences {
             row.connect('activated', () => new Gtk.UriLauncher({uri}).launch(window, null, null));
             group.add(row);
         }
-
-        return group;
+        return page;
     }
 }

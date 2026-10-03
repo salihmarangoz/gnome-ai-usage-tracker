@@ -5,24 +5,27 @@ A GNOME Shell extension that shows how much of your **Claude Code** and
 
 ![Menu screenshot](docs/screenshot.png)
 
-Top bar styles, from top to bottom: text only (default), Bars, Bars with
-Claude set to Remaining, Gauge:
+Top bar, from top to bottom: default, Show Bars, longer and thicker bars,
+Claude with a custom colour and its name hidden, 5-hour limits only (Codex
+falls back to its weekly limit because its plan has no 5-hour limit):
 
 ![Top bar styles](docs/top-bar-styles.png)
 
-- Top bar shows the most used limit of each service, e.g. `Claude 16%  Codex 0%`
+- Top bar shows the 5-hour and weekly usage of each service, e.g.
+  `Claude 19%/18%  Codex 0%`
 - The menu shows every limit window (5-hour, weekly) with a bar and the time
-  it resets. Claude bars are orange, Codex bars blue; they turn yellow at 70%
-  and red at 90% used
-- Settings:
-  - for each service: top bar and menu, top bar only, menu only, or disabled
-  - for each service: show usage (bars fill up) or what is remaining (bars empty)
-  - show or hide the icon (off by default), as a **gauge** (a stock icon from
-    your icon theme) or as **bars**: two small bars per service, the 5-hour
-    limit on top and the weekly limit below
-  - refresh interval per service: Claude 5 to 120 minutes, Codex 1 to 120
-    (default 10)
-  - About: version, changelog and links
+  it resets. Bars use the service colour (Claude orange and Codex blue by
+  default) and turn yellow at 70% and red at 90% used
+- Settings, in three tabs:
+  - **Services**, for each service: show it in the top bar and menu, top bar
+    only, menu only, or disable it; show usage (bars fill up) or what is
+    remaining (bars empty); refresh interval (Claude 5 to 120 minutes, Codex
+    1 to 120, default 10)
+  - **Appearance**: small bars in the top bar (one per limit, 5-hour on top)
+    with length and thickness sliders; the app icon, a gauge from your icon
+    theme; and for each service the limits shown in the top bar (5-hour,
+    weekly or both), its name on or off, and its colour
+  - **About**: version, changelog and links
 
 Supports GNOME Shell 46 – 50.
 

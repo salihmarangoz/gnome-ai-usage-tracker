@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.ai-usage-tracker" path="/org/gnome/shell/extensions/ai-usage-tracker/">
+    <!-- Claude Code -->
     <key name="claude-show" type="s">
       <choices>
         <choice value="both"/>
@@ -25,6 +26,25 @@
       <default>10</default>
       <summary>Minutes between Claude Code usage updates</summary>
     </key>
+    <key name="claude-panel-limits" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="short"/>
+        <choice value="long"/>
+      </choices>
+      <default>'both'</default>
+      <summary>Claude Code limits shown in the top bar (5-hour, weekly or both)</summary>
+    </key>
+    <key name="claude-show-name" type="b">
+      <default>true</default>
+      <summary>Show the Claude name in the top bar</summary>
+    </key>
+    <key name="claude-color" type="s">
+      <default>'#d97757'</default>
+      <summary>Claude Code bar colour</summary>
+    </key>
+
+    <!-- Codex -->
     <key name="codex-show" type="s">
       <choices>
         <choice value="both"/>
@@ -48,17 +68,42 @@
       <default>10</default>
       <summary>Minutes between Codex usage updates</summary>
     </key>
-    <key name="show-icon" type="b">
-      <default>false</default>
-      <summary>Show the icon in the top bar</summary>
-    </key>
-    <key name="icon-style" type="s">
+    <key name="codex-panel-limits" type="s">
       <choices>
-        <choice value="gauge"/>
-        <choice value="bars"/>
+        <choice value="both"/>
+        <choice value="short"/>
+        <choice value="long"/>
       </choices>
-      <default>'gauge'</default>
-      <summary>Gauge icon, or small usage bars for each service</summary>
+      <default>'both'</default>
+      <summary>Codex limits shown in the top bar (5-hour, weekly or both)</summary>
+    </key>
+    <key name="codex-show-name" type="b">
+      <default>true</default>
+      <summary>Show the Codex name in the top bar</summary>
+    </key>
+    <key name="codex-color" type="s">
+      <default>'#3584e4'</default>
+      <summary>Codex bar colour</summary>
+    </key>
+
+    <!-- Top bar -->
+    <key name="show-bars" type="b">
+      <default>false</default>
+      <summary>Show small usage bars in the top bar</summary>
+    </key>
+    <key name="bar-length" type="u">
+      <range min="8" max="60"/>
+      <default>18</default>
+      <summary>Length of the top bar usage bars in pixels</summary>
+    </key>
+    <key name="bar-thickness" type="u">
+      <range min="2" max="10"/>
+      <default>4</default>
+      <summary>Thickness of the top bar usage bars in pixels</summary>
+    </key>
+    <key name="show-app-icon" type="b">
+      <default>false</default>
+      <summary>Show the gauge icon in the top bar</summary>
     </key>
   </schema>
 </schemalist>

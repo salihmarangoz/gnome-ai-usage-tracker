@@ -16,12 +16,15 @@ turns that section into a dated release.
   weekly windows), using the logins of the command line tools.
 - Menu with a usage bar and reset time for every limit. Claude bars are
   orange, Codex bars blue; bars turn yellow at 70% and red at 90% used.
-- Settings:
+- Settings in three tabs (Services, Appearance, About):
   - Per service: top bar and menu, top bar only, menu only, or disabled.
   - Per service display: usage (bars fill up) or remaining (bars empty).
-  - Show Icon, off by default, with two styles: a stock gauge from the icon
-    theme (or a question mark if the theme has none), or small bars for each
-    service with the 5-hour limit on top and the weekly limit below.
+  - Per service top bar limits: 5-hour, weekly, or both (`19%/18%`).
+  - Per service name on or off and bar colour.
+  - Small bars in the top bar, one per limit with the 5-hour limit on top,
+    with length and thickness sliders.
+  - Show App Icon, off by default: a stock gauge from the icon theme, or a
+    question mark if the theme has none.
   - Refresh interval per service: Claude 5 to 120 minutes, Codex 1 to 120,
     10 by default.
   - About section with version, links and license.

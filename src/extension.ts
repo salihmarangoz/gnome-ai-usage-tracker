@@ -17,47 +17,62 @@ import type {Provider, Usage, UsageWindow} from './usage.js';
 
 type Show = 'both' | 'panel' | 'menu' | 'off';
 
+// Which limits the top bar shows: the short (5-hour) ones, the long (weekly) ones, or both
+type Limits = 'both' | 'short' | 'long';
+
 // Stock theme icons, first one found wins: a gauge, or a question mark
 const ICON_NAMES = ['speedometer-symbolic', 'power-profile-balanced-symbolic', 'dialog-question-symbolic'];
+
+const DAY = 24 * 3600;
 
 interface Result {
     usage?: Usage;
     error?: string;
 }
 
-function usageBar(used: number, shown: number, providerId: string): St.Widget {
-    const bar = new St.Widget({
-        style_class: 'ai-usage-bar',
-        y_align: Clutter.ActorAlign.CENTER,
-    });
-    const fill = new St.Widget({
-        style_class: `ai-usage-bar-fill ${providerId}`,
-        scale_x: shown / 100,
-    });
-    if (used >= 90)
-        fill.add_style_class_name('critical');
-    else if (used >= 70)
-        fill.add_style_class_name('warning');
-    bar.add_child(fill);
-    return bar;
-}
-
-// Small bars for the top bar: the shortest window (5-hour) on top, the longest (weekly) below
-function miniBars({windows}: Usage, providerId: string, showRemaining: boolean): St.Widget {
-    const box = new St.Widget({
-        style_class: 'ai-usage-mini',
-        layout_manager: new Clutter.BoxLayout({orientation: Clutter.Orientation.VERTICAL, spacing: 2}),
-        y_align: Clutter.ActorAlign.CENTER,
-    });
-    for (const w of [...windows].sort((a, b) => a.seconds - b.seconds)) {
-        const used = clamp(w.percent);
-        box.add_child(usageBar(used, showRemaining ? 100 - used : used, providerId));
-    }
-    return box;
+interface BarSize {
+    length: number;
+    thickness: number;
 }
 
 function clamp(percent: number): number {
     return Math.min(Math.max(percent, 0), 100);
+}
+
+function shownPercent(percent: number, showRemaining: boolean): number {
+    return showRemaining ? 100 - clamp(percent) : clamp(percent);
+}
+
+function usageBar(percent: number, showRemaining: boolean, color: string, size?: BarSize): St.Widget {
+    const sizeStyle = size
+        ? `width: ${size.length}px; height: ${size.thickness}px; border-radius: ${size.thickness / 2}px;`
+        : '';
+    const bar = new St.Widget({
+        style_class: 'ai-usage-bar',
+        style: sizeStyle,
+        y_align: Clutter.ActorAlign.CENTER,
+    });
+    const fill = new St.Widget({
+        style_class: 'ai-usage-bar-fill',
+        style: sizeStyle,
+        scale_x: shownPercent(percent, showRemaining) / 100,
+    });
+    // The warning colours override the service colour close to the limit
+    if (percent >= 90)
+        fill.add_style_class_name('critical');
+    else if (percent >= 70)
+        fill.add_style_class_name('warning');
+    else
+        fill.style += `background-color: ${color};`;
+    bar.add_child(fill);
+    return bar;
+}
+
+function topBarWindows({windows}: Usage, limits: Limits): UsageWindow[] {
+    const sorted = [...windows].sort((a, b) => a.seconds - b.seconds);
+    const picked = sorted.filter(w => limits === 'both' || (limits === 'short') === (w.seconds < DAY));
+    // A plan without the chosen limit shows the limits it has
+    return picked.length ? picked : sorted;
 }
 
 function formatTime(unixTime: number): string {
@@ -71,16 +86,14 @@ class UsageItem extends PopupMenu.PopupMenuItem {
         GObject.registerClass(this);
     }
 
-    constructor({name, percent, resetsAt}: UsageWindow, providerId: string, showRemaining: boolean) {
+    constructor({name, percent, resetsAt}: UsageWindow, color: string, showRemaining: boolean) {
         super(name, {reactive: false, can_focus: false});
         this.label.add_style_class_name('ai-usage-name');
 
-        const used = clamp(percent);
-        const shown = showRemaining ? 100 - used : used;
-        this.add_child(usageBar(used, shown, providerId));
+        this.add_child(usageBar(percent, showRemaining, color));
 
         this.add_child(new St.Label({
-            text: `${Math.round(shown)}% ${showRemaining ? 'left' : 'used'}`,
+            text: `${Math.round(shownPercent(percent, showRemaining))}% ${showRemaining ? 'left' : 'used'}`,
             style_class: 'ai-usage-percent',
             y_align: Clutter.ActorAlign.CENTER,
         }));
@@ -132,7 +145,7 @@ class UsageIndicator extends PanelMenu.Button {
         this._usageSection = new PopupMenu.PopupMenuSection();
         menu.addMenuItem(this._usageSection);
         menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._refreshItem = new PopupMenu.PopupMenuItem('Refresh');
+        this._refreshItem = new PopupMenu.PopupMenuItem('Refresh Now');
         this._refreshItem.connect('activate', () => this._refresh(PROVIDERS));
         menu.addMenuItem(this._refreshItem);
         menu.addAction('Settings', () => extension.openPreferences());
@@ -154,8 +167,8 @@ class UsageIndicator extends PanelMenu.Button {
             this._showResults();
     }
 
-    private _show(provider: Provider): Show {
-        return this._settings.get_string(`${provider.id}-show`) as Show;
+    private _get(provider: Provider, key: string): string {
+        return this._settings.get_string(`${provider.id}-${key}`);
     }
 
     private _startTimer(provider: Provider) {
@@ -171,7 +184,7 @@ class UsageIndicator extends PanelMenu.Button {
     }
 
     private async _refresh(providers: Provider[]) {
-        await Promise.all(providers.filter(p => this._show(p) !== 'off').map(async provider => {
+        await Promise.all(providers.filter(p => this._get(p, 'show') !== 'off').map(async provider => {
             try {
                 this._results.set(provider.id, {usage: await provider.fetch(this._session, this._cancellable)});
             } catch (e) {
@@ -183,46 +196,65 @@ class UsageIndicator extends PanelMenu.Button {
         if (this._cancellable.is_cancelled())
             return;
 
-        this._refreshItem.label.text = `Refresh (last updated ${formatTime(Date.now() / 1000)})`;
+        this._refreshItem.label.text = `Refresh Now (last updated ${formatTime(Date.now() / 1000)})`;
         this._showResults();
     }
 
     private _showResults() {
-        const showIcon = this._settings.get_boolean('show-icon');
-        const bars = showIcon && this._settings.get_string('icon-style') === 'bars';
+        const bars: BarSize | null = this._settings.get_boolean('show-bars')
+            ? {length: this._settings.get_uint('bar-length'), thickness: this._settings.get_uint('bar-thickness')}
+            : null;
         this._usageSection.removeAll();
         this._panelItems.destroy_all_children();
 
         for (const provider of PROVIDERS) {
-            const show = this._show(provider);
+            const show = this._get(provider, 'show') as Show;
             const result = this._results.get(provider.id);
             if (show === 'off' || !result)
                 continue;
 
-            const showRemaining = this._settings.get_string(`${provider.id}-display`) === 'remaining';
             if (show === 'both' || show === 'menu')
-                this._addMenuSection(provider, result, showRemaining);
+                this._addMenuSection(provider, result);
             if (show === 'both' || show === 'panel')
-                this._addPanelItem(provider, result, showRemaining, bars);
+                this._addPanelItem(provider, result, bars);
         }
 
-        // The gauge is also shown when the top bar has nothing else to click on
+        // The app icon is also shown when the top bar has nothing else to click on
         this._panelItems.visible = this._panelItems.get_n_children() > 0;
-        this._icon.visible = !this._panelItems.visible || (showIcon && !bars);
+        this._icon.visible = !this._panelItems.visible || this._settings.get_boolean('show-app-icon');
     }
 
-    private _addPanelItem(provider: Provider, result: Result, showRemaining: boolean, bars: boolean) {
+    private _addPanelItem(provider: Provider, {usage}: Result, bars: BarSize | null) {
+        const showRemaining = this._get(provider, 'display') === 'remaining';
+        const color = this._get(provider, 'color');
+        const windows = usage ? topBarWindows(usage, this._get(provider, 'panel-limits') as Limits) : [];
         const item = new St.BoxLayout({style_class: 'ai-usage-panel-item'});
-        if (bars && result.usage)
-            item.add_child(miniBars(result.usage, provider.id, showRemaining));
+
+        if (bars && windows.length) {
+            // Shortest limit on top
+            const stack = new St.Widget({
+                style_class: 'ai-usage-mini',
+                layout_manager: new Clutter.BoxLayout({
+                    orientation: Clutter.Orientation.VERTICAL,
+                    spacing: Math.max(1, Math.round(bars.thickness / 2)),
+                }),
+                y_align: Clutter.ActorAlign.CENTER,
+            });
+            for (const w of windows)
+                stack.add_child(usageBar(w.percent, showRemaining, color, bars));
+            item.add_child(stack);
+        }
+
+        const values = windows.map(w => `${Math.round(shownPercent(w.percent, showRemaining))}%`).join('/');
+        const name = this._settings.get_boolean(`${provider.id}-show-name`) ? `${provider.shortName} ` : '';
         item.add_child(new St.Label({
-            text: `${provider.shortName} ${panelValue(result, showRemaining)}`,
+            text: `${name}${values || '–'}`,
             y_align: Clutter.ActorAlign.CENTER,
         }));
         this._panelItems.add_child(item);
     }
 
-    private _addMenuSection(provider: Provider, {usage, error}: Result, showRemaining: boolean) {
+    private _addMenuSection(provider: Provider, {usage, error}: Result) {
         const plan = usage?.plan ? ` · ${usage.plan[0].toUpperCase()}${usage.plan.slice(1)}` : '';
         this._usageSection.addMenuItem(new PopupMenu.PopupSeparatorMenuItem(`${provider.name}${plan}`));
 
@@ -232,8 +264,10 @@ class UsageIndicator extends PanelMenu.Button {
             return;
         }
 
+        const showRemaining = this._get(provider, 'display') === 'remaining';
+        const color = this._get(provider, 'color');
         for (const w of usage.windows)
-            this._usageSection.addMenuItem(new UsageItem(w, provider.id, showRemaining));
+            this._usageSection.addMenuItem(new UsageItem(w, color, showRemaining));
     }
 
     override destroy() {
@@ -243,13 +277,6 @@ class UsageIndicator extends PanelMenu.Button {
         this._timeouts.clear();
         super.destroy();
     }
-}
-
-function panelValue({usage}: Result, showRemaining: boolean): string {
-    if (!usage)
-        return '–';
-    const highest = Math.max(0, ...usage.windows.map(w => w.percent));
-    return `${Math.round(showRemaining ? Math.max(100 - highest, 0) : highest)}%`;
 }
 
 export default class AiUsageExtension extends Extension {

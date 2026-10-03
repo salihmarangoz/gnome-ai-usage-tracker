@@ -13,7 +13,7 @@ them, and the zip is packed from `build/`.
 | `src/usage.ts` | Reads the CLI tokens and fetches usage; no Shell imports, so it can run in plain `gjs` |
 | `src/prefs.ts` | Preferences window (GTK4 / libadwaita, separate process) |
 | `src/ambient.d.ts` | Pulls in the GJS and GNOME Shell type definitions |
-| `schemas/*.gschema.xml` | Settings: per service `<id>-show` (`both`, `panel`, `menu`, `off`), `<id>-display` (`usage`, `remaining`) and `<id>-refresh-interval`, plus `show-icon` and `icon-style` (`gauge`, `bars`) |
+| `schemas/*.gschema.xml` | Settings: per service `<id>-show` (`both`, `panel`, `menu`, `off`), `<id>-display` (`usage`, `remaining`), `<id>-refresh-interval`, `<id>-panel-limits` (`both`, `short`, `long`), `<id>-show-name`, `<id>-color`; plus `show-bars`, `bar-length`, `bar-thickness`, `show-app-icon` |
 | `stylesheet.css` | Menu row and usage bar styling |
 
 Not shipped in the zip:
