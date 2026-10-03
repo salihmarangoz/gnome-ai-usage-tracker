@@ -24,7 +24,7 @@ Not shipped in the zip:
 | `tools/release.py` | Sets `version-name` and dates the changelog (`make release`) |
 | `CHANGELOG.md` | Release notes, newest first |
 
-See [architecture.md](architecture.md) for how the data is fetched.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for how the data is fetched.
 
 ## Commands
 
@@ -102,7 +102,7 @@ Known gaps in the types, worked around in the code:
 ## Code style
 
 The code is reviewed by humans on extensions.gnome.org, so keep it small and
-plain (see [publishing.md](publishing.md)):
+plain (see [PUBLISHING.md](PUBLISHING.md)):
 
 - TypeScript in `src/`; never edit `build/`
 - 4 spaces, single quotes, trailing commas in multi-line literals

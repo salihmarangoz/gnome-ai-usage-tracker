@@ -94,7 +94,7 @@ Logs: `journalctl -f -o cat /usr/bin/gnome-shell`
 
 ## Development
 
-See [docs/development.md](docs/development.md). Changes are listed in
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## AI Disclosure

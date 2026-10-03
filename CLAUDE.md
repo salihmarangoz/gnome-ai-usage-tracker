@@ -13,9 +13,9 @@ review guidelines.
 Keep all project knowledge in this repo, not in external memory:
 
 - `CLAUDE.md` — rules for working on the project (this file)
-- `docs/architecture.md` — data flow, endpoints, response fields
-- `docs/development.md` — files, commands, testing, code style
-- `docs/publishing.md` — releases, EGO review checklist (reference), AI policy
+- `docs/ARCHITECTURE.md` — data flow, endpoints, response fields
+- `docs/DEVELOPMENT.md` — files, commands, testing, code style
+- `docs/PUBLISHING.md` — releases, EGO review checklist (reference), AI policy
 
 Update the relevant doc in the same change when behavior, endpoints, commands
 or supported versions change.
@@ -24,7 +24,7 @@ or supported versions change.
 
 TypeScript, not JavaScript (maintainer's choice). Sources are in `src/*.ts`;
 `tsc` compiles them to `build/` and the zip is packed from there. Never edit
-`build/` or add hand-written `.js` files. See `docs/development.md` → Types
+`build/` or add hand-written `.js` files. See `docs/DEVELOPMENT.md` → Types
 for the type packages and their known gaps.
 
 ## Commands
@@ -47,7 +47,7 @@ Alt+F2 → `r`. Logs: `journalctl -f -o cat /usr/bin/gnome-shell`.
   consistent code: no defensive `try`/`catch` around well-defined APIs, no
   unused helpers, no comments that narrate the code or read like prompts, no
   APIs you have not verified in the GNOME Shell sources.
-- Follow the review guidelines (summarized in `docs/publishing.md`): create in
+- Follow the review guidelines (summarized in `docs/PUBLISHING.md`): create in
   `enable()`, clean up in `disable()`, no sync IO in the shell, no logging spam.
 - Never refresh, write or copy the CLI tokens. Only read the access token and
   send it to the service that issued it.
@@ -58,7 +58,7 @@ Alt+F2 → `r`. Logs: `journalctl -f -o cat /usr/bin/gnome-shell`.
 - No i18n for now (strings are plain English).
 - Each service has its own refresh interval. Claude's minimum is 5 minutes
   because its usage endpoint throttles faster polling, Codex allows 1 minute
-  (see `docs/architecture.md`). The ranges live only in the schema; prefs reads
+  (see `docs/ARCHITECTURE.md`). The ranges live only in the schema; prefs reads
   them from there.
 - Types target GNOME 50, the runtime minimum is GNOME 46: verify new APIs
   against GNOME 46 before using them.
