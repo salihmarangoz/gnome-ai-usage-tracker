@@ -35,9 +35,21 @@ API key logins have no plan limits, so there is nothing to show for them.
 
 ## Installation
 
-### From extensions.gnome.org
+### Why it is not on extensions.gnome.org
 
-Not published yet.
+I have decided not to upload this extension to
+[extensions.gnome.org](https://extensions.gnome.org). Its
+[review guidelines](https://gjs.guide/extensions/review-guidelines/review-guidelines.html)
+say:
+
+> Extensions must not be AI-generated. While it is **not** prohibited to use
+> AI as a learning aid or a development tool (i.e. code completions),
+> extension developers should be able to justify and explain the code they
+> submit, within reason.
+
+Most of this extension was written by an AI coding assistant (see
+[AI Disclosure](#ai-disclosure)), so it does not belong there. It is only
+distributed from this repository.
 
 ### From source
 
@@ -91,7 +103,8 @@ This extension was written with substantial help from an AI coding assistant.
 [Claude Code](https://claude.com/claude-code) (Anthropic, model Claude Opus 5.5)
 generated most of the code, the documentation and this README from the
 maintainer's instructions. The maintainer reviews and tests every change and
-is responsible for everything that is released.
+is responsible for everything that is released. Because of this, the extension
+is not published on extensions.gnome.org (see [Installation](#installation)).
 
 ## License
 

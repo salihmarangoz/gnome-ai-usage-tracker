@@ -3,7 +3,6 @@
 """Starts a release: sets the version and dates the changelog.
 
 The version shown to users is `version-name` in metadata.json.
-extensions.gnome.org also numbers every upload itself (1, 2, 3, ...).
 
     python3 tools/release.py 1.1
 """
@@ -31,4 +30,4 @@ metadata = json.loads(metadata_path.read_text())
 metadata['version-name'] = version
 metadata_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + '\n')
 
-print(f'Version {version}. Check CHANGELOG.md, then upload the zip from make lint.')
+print(f'Version {version}. Check CHANGELOG.md, then commit, tag v{version} and push.')

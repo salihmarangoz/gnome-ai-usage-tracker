@@ -1,18 +1,20 @@
-# Publishing to extensions.gnome.org
+# Releases and extensions.gnome.org
 
-## Steps
+The extension is **not** published on extensions.gnome.org (EGO). The
+maintainer decided against it because of EGO's AI policy (quoted below and in
+the README). It is distributed from GitHub only. The rest of this document is
+kept as a reference: the code still follows the EGO review guidelines.
+
+## Releasing
 
 1. `make release VERSION=x.y` sets `version-name` in `metadata.json`, turns
    the Unreleased section of `CHANGELOG.md` into a dated release and runs
-   the linter, which must report `clean`. (EGO also numbers every upload
-   itself; that number is separate.)
-2. Commit and tag the release (`git tag vx.y`).
-3. Test on the GNOME versions listed in `shell-version`.
-4. Upload `dist/ai-usage-tracker@salihmarangoz.github.io.shell-extension.zip`
-   at <https://extensions.gnome.org/upload/>.
-5. On the extension page, set the screenshot to `docs/screenshot.png`.
-6. Wait for the review email. Reviewers may ask questions about the code; you
-   must be able to explain every line (see AI policy below).
+   the linter, which must report `clean`.
+2. Test on the GNOME versions listed in `shell-version`.
+3. Commit, tag (`git tag vx.y`) and push.
+4. Optionally attach
+   `dist/ai-usage-tracker@salihmarangoz.github.io.shell-extension.zip` to a
+   GitHub release; it installs with `gnome-extensions install`.
 
 ## License
 
@@ -52,6 +54,6 @@ The guidelines say:
 > inconsistent code style, imaginary API usage, comments serving as LLM
 > prompts, or other indications of AI-generated output will be rejected.
 
-This project discloses AI assistance in the README. Before every upload the
-maintainer must read and understand all code in the zip, and keep it free of
-the patterns listed above. Rejection is possible regardless.
+Most of this project was written with Claude Code, which the README discloses.
+That is why the maintainer decided not to submit it to EGO. The code is still
+kept free of the patterns listed above.

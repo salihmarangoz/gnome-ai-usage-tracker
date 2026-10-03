@@ -1,8 +1,12 @@
 # CLAUDE.md
 
 GNOME Shell extension (`ai-usage-tracker@salihmarangoz.github.io`) that shows
-Claude Code and Codex plan usage in the top bar. Target: extensions.gnome.org
-(EGO). License: MIT.
+Claude Code and Codex plan usage in the top bar. License: MIT.
+
+Distributed from GitHub only. The maintainer decided not to publish it on
+extensions.gnome.org (EGO) because EGO does not accept AI-generated
+extensions (see README → Installation). The code still follows the EGO
+review guidelines.
 
 ## Project memory
 
@@ -11,7 +15,7 @@ Keep all project knowledge in this repo, not in external memory:
 - `CLAUDE.md` — rules for working on the project (this file)
 - `docs/architecture.md` — data flow, endpoints, response fields
 - `docs/development.md` — files, commands, testing, code style
-- `docs/publishing.md` — EGO upload steps, review checklist, AI policy
+- `docs/publishing.md` — releases, EGO review checklist (reference), AI policy
 
 Update the relevant doc in the same change when behavior, endpoints, commands
 or supported versions change.
@@ -30,7 +34,7 @@ make build      # tsc + static files into build/
 npm run check   # type-check only
 make pack       # build dist/*.zip
 make install    # install locally (shell restart needed for new code)
-make lint       # shexli, must be clean before upload
+make lint       # shexli (EGO static analyzer), keep it clean
 make release VERSION=x.y   # version + changelog + lint
 ```
 
