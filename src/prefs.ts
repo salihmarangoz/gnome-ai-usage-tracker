@@ -12,7 +12,12 @@ const SHOW_CHOICES: Choices = [
     ['both', 'Top Bar and Menu'],
     ['panel', 'Top Bar Only'],
     ['menu', 'Menu Only'],
-    ['off', 'Off'],
+    ['off', 'Disabled'],
+];
+
+const ICON_STYLE_CHOICES: Choices = [
+    ['gauge', 'Gauge'],
+    ['bars', 'Bars'],
 ];
 
 const DISPLAY_CHOICES: Choices = [
@@ -55,6 +60,8 @@ export default class AiUsagePreferences extends ExtensionPreferences {
         for (const {id, title, file} of SERVICES) {
             const group = new Adw.PreferencesGroup({title, description: `Uses the login in ${file}`});
             group.add(comboRow(settings, `${id}-show`, SHOW_CHOICES, 'Show'));
+            group.add(comboRow(settings, `${id}-display`, DISPLAY_CHOICES, 'Display',
+                'Usage fills the bars, remaining empties them'));
             group.add(intervalRow(settings, `${id}-refresh-interval`));
             page.add(group);
         }
@@ -62,13 +69,11 @@ export default class AiUsagePreferences extends ExtensionPreferences {
         page.add(this._generalGroup(settings));
         page.add(this._aboutGroup(window));
         window.add(page);
+        window.set_default_size(640, 1040);
     }
 
     private _generalGroup(settings: Gio.Settings): Adw.PreferencesGroup {
         const group = new Adw.PreferencesGroup({title: 'General'});
-
-        group.add(comboRow(settings, 'display', DISPLAY_CHOICES, 'Display',
-            'Usage fills the bars, remaining empties them'));
 
         const icon = new Adw.SwitchRow({
             title: 'Show Icon',
@@ -77,19 +82,19 @@ export default class AiUsagePreferences extends ExtensionPreferences {
         settings.bind('show-icon', icon, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(icon);
 
+        const style = comboRow(settings, 'icon-style', ICON_STYLE_CHOICES, 'Icon Style',
+            'Bars: 5-hour limit on top, weekly below, for each service');
+        settings.bind('show-icon', style, 'sensitive', Gio.SettingsBindFlags.GET);
+        group.add(style);
+
         return group;
     }
 
     private _aboutGroup(window: Adw.PreferencesWindow): Adw.PreferencesGroup {
         const group = new Adw.PreferencesGroup({
             title: 'About',
-            description: 'Not affiliated with Anthropic or OpenAI',
+            description: `Version ${this.metadata['version-name']}. Not affiliated with Anthropic or OpenAI.`,
         });
-
-        group.add(new Adw.ActionRow({
-            title: this.metadata.name,
-            subtitle: `Version ${this.metadata['version-name']}`,
-        }));
 
         const url = this.metadata.url;
         if (!url)

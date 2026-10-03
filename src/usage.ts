@@ -16,6 +16,8 @@ const TOO_MANY_REQUESTS = 429;
 
 export interface UsageWindow {
     name: string;
+    /** Length of the window */
+    seconds: number;
     percent: number;
     /** Unix time in seconds */
     resetsAt: number | null;
@@ -116,13 +118,17 @@ const claude: Provider = {
             'anthropic-beta': 'oauth-2025-04-20',
         }, cancellable);
 
-        const windows: [string, ClaudeWindow | null][] = [['5-hour', usage.five_hour], ['Weekly', usage.seven_day]];
+        const windows: [string, number, ClaudeWindow | null][] = [
+            ['5-hour', 5 * 3600, usage.five_hour],
+            ['Weekly', 7 * 24 * 3600, usage.seven_day],
+        ];
         return {
             plan: auth.subscriptionType ?? null,
             windows: windows
-                .filter((entry): entry is [string, ClaudeWindow] => entry[1] !== null)
-                .map(([name, w]) => ({
+                .filter((entry): entry is [string, number, ClaudeWindow] => entry[2] !== null)
+                .map(([name, seconds, w]) => ({
                     name,
+                    seconds,
                     percent: w.utilization,
                     resetsAt: w.resets_at ? Math.round(Date.parse(w.resets_at) / 1000) : null,
                 })),
@@ -153,6 +159,7 @@ const codex: Provider = {
                 .filter((w): w is CodexWindow => !!w)
                 .map(w => ({
                     name: windowName(w.limit_window_seconds),
+                    seconds: w.limit_window_seconds,
                     percent: w.used_percent,
                     resetsAt: w.reset_at,
                 })),

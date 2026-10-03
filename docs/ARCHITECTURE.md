@@ -24,8 +24,9 @@ Each provider returns the same shape:
 {
     plan: 'max',               // shown next to the service name
     windows: [
-        {name: '5-hour', percent: 11, resetsAt: 1791071399},  // unix seconds
-        {name: 'Weekly', percent: 16, resetsAt: 1791601199},
+        // seconds: window length (sorts the top bar bars), resetsAt: unix time
+        {name: '5-hour', seconds: 18000, percent: 11, resetsAt: 1791071399},
+        {name: 'Weekly', seconds: 604800, percent: 16, resetsAt: 1791601199},
     ],
 }
 ```

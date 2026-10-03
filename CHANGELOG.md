@@ -17,10 +17,11 @@ turns that section into a dated release.
 - Menu with a usage bar and reset time for every limit. Claude bars are
   orange, Codex bars blue; bars turn yellow at 70% and red at 90% used.
 - Settings:
-  - Per service: top bar and menu, top bar only, menu only, or off.
-  - Display: show usage (bars fill up) or remaining (bars empty).
-  - Show Icon. The icon is a stock gauge from the icon theme, or a question
-    mark if the theme has none.
+  - Per service: top bar and menu, top bar only, menu only, or disabled.
+  - Per service display: usage (bars fill up) or remaining (bars empty).
+  - Show Icon, off by default, with two styles: a stock gauge from the icon
+    theme (or a question mark if the theme has none), or small bars for each
+    service with the 5-hour limit on top and the weekly limit below.
   - Refresh interval per service: Claude 5 to 120 minutes, Codex 1 to 120,
     10 by default.
   - About section with version, links and license.

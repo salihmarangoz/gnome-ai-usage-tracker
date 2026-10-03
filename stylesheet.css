@@ -39,3 +39,23 @@
   margin-left: 12px;
   font-size: 0.9em;
 }
+
+.ai-usage-panel {
+  spacing: 12px;
+}
+
+.ai-usage-panel-item {
+  spacing: 6px;
+}
+
+.ai-usage-mini .ai-usage-bar,
+.ai-usage-mini .ai-usage-bar-fill {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.ai-usage-mini .ai-usage-bar {
+  margin: 0;
+  background-color: rgba(127, 127, 127, 0.5);
+}

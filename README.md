@@ -5,14 +5,21 @@ A GNOME Shell extension that shows how much of your **Claude Code** and
 
 ![Menu screenshot](docs/screenshot.png)
 
+Top bar styles, from top to bottom: text only (default), Bars, Bars with
+Claude set to Remaining, Gauge:
+
+![Top bar styles](docs/top-bar-styles.png)
+
 - Top bar shows the most used limit of each service, e.g. `Claude 16%  Codex 0%`
 - The menu shows every limit window (5-hour, weekly) with a bar and the time
   it resets. Claude bars are orange, Codex bars blue; they turn yellow at 70%
   and red at 90% used
 - Settings:
-  - for each service: top bar and menu, top bar only, menu only, or off
-  - show usage (bars fill up) or what is remaining (bars empty)
-  - show or hide the icon (a stock gauge icon from your icon theme)
+  - for each service: top bar and menu, top bar only, menu only, or disabled
+  - for each service: show usage (bars fill up) or what is remaining (bars empty)
+  - show or hide the icon (off by default), as a **gauge** (a stock icon from
+    your icon theme) or as **bars**: two small bars per service, the 5-hour
+    limit on top and the weekly limit below
   - refresh interval per service: Claude 5 to 120 minutes, Codex 1 to 120
     (default 10)
   - About: version, changelog and links
