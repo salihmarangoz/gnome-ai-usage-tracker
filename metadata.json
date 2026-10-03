@@ -1,0 +1,15 @@
+{
+  "uuid": "ai-usage-tracker@salihmarangoz.github.io",
+  "name": "AI Usage Tracker",
+  "description": "Shows how much of your Claude Code and Codex plan limits you have used (5-hour and weekly windows) in the top bar.\n\nThe extension reads the login tokens that the Claude Code and Codex command line tools store in ~/.claude/.credentials.json and ~/.codex/auth.json. Each token is only sent to its own service (api.anthropic.com or chatgpt.com) to fetch your usage. Tokens are never modified or refreshed, and no other data leaves your computer.\n\nThis extension is not affiliated with Anthropic or OpenAI.",
+  "shell-version": [
+    "46",
+    "47",
+    "48",
+    "49",
+    "50"
+  ],
+  "version-name": "1.0",
+  "url": "https://github.com/salihmarangoz/gnome-ai-usage-tracker",
+  "settings-schema": "org.gnome.shell.extensions.ai-usage-tracker"
+}

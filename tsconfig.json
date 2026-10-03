@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "rootDir": "src",
+    "outDir": "build",
+    "strict": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "useDefineForClassFields": false,
+    "newLine": "lf"
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.ai-usage-tracker" path="/org/gnome/shell/extensions/ai-usage-tracker/">
+    <key name="claude-show" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="panel"/>
+        <choice value="menu"/>
+        <choice value="off"/>
+      </choices>
+      <default>'both'</default>
+      <summary>Where to show Claude Code usage</summary>
+    </key>
+    <key name="claude-refresh-interval" type="u">
+      <!-- Claude throttles its usage endpoint when polled more often -->
+      <range min="5" max="120"/>
+      <default>10</default>
+      <summary>Minutes between Claude Code usage updates</summary>
+    </key>
+    <key name="codex-show" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="panel"/>
+        <choice value="menu"/>
+        <choice value="off"/>
+      </choices>
+      <default>'both'</default>
+      <summary>Where to show Codex usage</summary>
+    </key>
+    <key name="codex-refresh-interval" type="u">
+      <range min="1" max="120"/>
+      <default>10</default>
+      <summary>Minutes between Codex usage updates</summary>
+    </key>
+    <key name="display" type="s">
+      <choices>
+        <choice value="usage"/>
+        <choice value="remaining"/>
+      </choices>
+      <default>'usage'</default>
+      <summary>Show what is used or what is remaining</summary>
+    </key>
+    <key name="show-icon" type="b">
+      <default>true</default>
+      <summary>Show the icon in the top bar</summary>
+    </key>
+  </schema>
+</schemalist>

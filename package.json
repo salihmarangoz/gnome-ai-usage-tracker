@@ -1,0 +1,17 @@
+{
+  "name": "gnome-ai-usage-tracker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "GNOME Shell extension showing Claude Code and Codex plan usage",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@girs/gnome-shell": "50.0.4",
+    "@girs/soup-3.0": "^4.1.0",
+    "typescript": "~5.9.3"
+  }
+}

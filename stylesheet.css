@@ -1,0 +1,41 @@
+.ai-usage-name {
+  min-width: 4.5em;
+}
+
+.ai-usage-bar,
+.ai-usage-bar-fill {
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.ai-usage-bar {
+  margin: 0 8px;
+  background-color: rgba(127, 127, 127, 0.3);
+}
+
+.ai-usage-bar-fill {
+  background-color: #3584e4;
+}
+
+.ai-usage-bar-fill.claude {
+  background-color: #d97757;
+}
+
+.ai-usage-bar-fill.warning {
+  background-color: #e5a50a;
+}
+
+.ai-usage-bar-fill.critical {
+  background-color: #e01b24;
+}
+
+.ai-usage-percent {
+  min-width: 4.5em;
+  text-align: right;
+}
+
+.ai-usage-reset {
+  margin-left: 12px;
+  font-size: 0.9em;
+}
