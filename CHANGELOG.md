@@ -25,3 +25,4 @@ turns that section into a dated release.
     10 by default.
   - About section with version, links and license.
 - Written in TypeScript; the zip contains the compiled JavaScript.
+- GitHub releases with a ready-to-install zip.

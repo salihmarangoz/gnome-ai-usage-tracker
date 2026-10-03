@@ -11,10 +11,12 @@ kept as a reference: the code still follows the EGO review guidelines.
    the Unreleased section of `CHANGELOG.md` into a dated release and runs
    the linter, which must report `clean`.
 2. Test on the GNOME versions listed in `shell-version`.
-3. Commit, tag (`git tag vx.y`) and push.
-4. Optionally attach
-   `dist/ai-usage-tracker@salihmarangoz.github.io.shell-extension.zip` to a
-   GitHub release; it installs with `gnome-extensions install`.
+3. Commit, then tag and push: `git tag vx.y && git push origin main vx.y`.
+4. The `Release` workflow (`.github/workflows/release.yml`) checks that the
+   tag matches `version-name`, builds the zip with `make pack` and publishes a
+   GitHub release with the zip and the CHANGELOG section as notes
+   (`tools/release_notes.py`). The README's install command always downloads
+   the latest release.
 
 ## License
 

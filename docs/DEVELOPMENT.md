@@ -22,6 +22,8 @@ Not shipped in the zip:
 | --- | --- |
 | `package.json`, `tsconfig.json` | TypeScript compiler and type packages |
 | `tools/release.py` | Sets `version-name` and dates the changelog (`make release`) |
+| `tools/release_notes.py` | Prints one version's CHANGELOG section (release notes) |
+| `.github/workflows/release.yml` | Builds the zip and publishes a GitHub release for every `v*` tag |
 | `CHANGELOG.md` | Release notes, newest first |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the data is fetched.
@@ -33,7 +35,7 @@ Needs Node.js (for `tsc`); `make` runs `npm install` the first time.
 ```sh
 make build     # tsc + static files into build/
 npm run check  # type-check only
-make pack      # dist/<uuid>.shell-extension.zip
+make pack      # dist/<uuid>.shell-extension.zip (zip of build/)
 make install   # pack + gnome-extensions install --force
 make lint      # pack + shexli (EGO static analyzer)
 make version   # print the current version

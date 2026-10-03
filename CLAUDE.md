@@ -36,7 +36,8 @@ npm run check   # type-check only
 make pack       # build dist/*.zip
 make install    # install locally (shell restart needed for new code)
 make lint       # shexli (EGO static analyzer), keep it clean
-make release VERSION=x.y   # version + changelog + lint
+make release VERSION=x.y   # version + changelog + lint, then tag vx.y and push;
+                           # GitHub Actions publishes the release zip
 ```
 
 Developer machine: GNOME Shell 46 on X11 (Ubuntu). Reload with

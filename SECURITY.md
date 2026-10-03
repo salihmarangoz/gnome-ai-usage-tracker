@@ -15,7 +15,8 @@ extension version (Settings → About), your GNOME Shell version and the steps
 to reproduce.
 
 This is a personal project maintained in spare time, so reports are handled
-on a best-effort basis. Fixes are released from this repository.
+on a best-effort basis. Fixes are released from this repository. The
+extension comes without any warranty; see the Disclaimer in the README.
 
 ## Supported versions
 

@@ -15,9 +15,8 @@ build: node_modules
 
 pack: build
 	mkdir -p dist
-	gnome-extensions pack build --force --out-dir=dist \
-		--extra-source=usage.js \
-		--extra-source=LICENSE
+	rm -f $(ZIP)
+	cd build && zip -qr ../$(ZIP) .
 
 install: pack
 	gnome-extensions install --force $(ZIP)

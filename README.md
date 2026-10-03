@@ -51,6 +51,18 @@ Most of this extension was written by an AI coding assistant (see
 [AI Disclosure](#ai-disclosure)), so it does not belong there. It is only
 distributed from this repository.
 
+### From GitHub releases
+
+Download the latest release and install it:
+
+```sh
+wget https://github.com/salihmarangoz/gnome-ai-usage-tracker/releases/latest/download/ai-usage-tracker@salihmarangoz.github.io.shell-extension.zip
+gnome-extensions install --force ai-usage-tracker@salihmarangoz.github.io.shell-extension.zip
+```
+
+To update, run the same two commands again. All versions are on the
+[releases page](https://github.com/salihmarangoz/gnome-ai-usage-tracker/releases).
+
 ### From source
 
 Needs Node.js and npm (the extension is written in TypeScript).
@@ -61,8 +73,11 @@ cd gnome-ai-usage-tracker
 make install
 ```
 
-Then restart GNOME Shell (on X11 press <kbd>Alt</kbd>+<kbd>F2</kbd>, type `r`,
-press <kbd>Enter</kbd>; on Wayland log out and back in) and enable it:
+### Enable it
+
+Restart GNOME Shell (on X11 press <kbd>Alt</kbd>+<kbd>F2</kbd>, type `r`,
+press <kbd>Enter</kbd>; on Wayland log out and back in) and enable the
+extension:
 
 ```sh
 gnome-extensions enable ai-usage-tracker@salihmarangoz.github.io
@@ -104,9 +119,15 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Changes are listed in
 This extension was written with substantial help from an AI coding assistant.
 [Claude Code](https://claude.com/claude-code) (Anthropic, model Claude Opus 5.5)
 generated most of the code, the documentation and this README from the
-maintainer's instructions. The maintainer reviews and tests every change and
-is responsible for everything that is released. Because of this, the extension
-is not published on extensions.gnome.org (see [Installation](#installation)).
+maintainer's instructions. The maintainer reviews and tests every change.
+Because the code is mostly AI-generated, the extension is not published on
+extensions.gnome.org (see [Installation](#installation)).
+
+## Disclaimer
+
+This extension is provided as is, without any warranty (see the
+[MIT License](LICENSE)). I am not responsible for any data loss, account
+problems or security issues caused by using it. Use it at your own risk.
 
 ## License
 

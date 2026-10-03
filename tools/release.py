@@ -30,4 +30,4 @@ metadata = json.loads(metadata_path.read_text())
 metadata['version-name'] = version
 metadata_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + '\n')
 
-print(f'Version {version}. Check CHANGELOG.md, then commit, tag v{version} and push.')
+print(f'Version {version}. Check CHANGELOG.md, commit, then: git tag v{version} && git push origin main v{version}')
