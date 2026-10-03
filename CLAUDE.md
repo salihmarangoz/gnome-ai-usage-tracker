@@ -16,6 +16,7 @@ Keep all project knowledge in this repo, not in external memory:
 - `docs/ARCHITECTURE.md` — data flow, endpoints, response fields
 - `docs/DEVELOPMENT.md` — files, commands, testing, code style
 - `docs/PUBLISHING.md` — releases, EGO review checklist (reference), AI policy
+- `SECURITY.md` — how to report vulnerabilities, what happens to the tokens
 
 Update the relevant doc in the same change when behavior, endpoints, commands
 or supported versions change.

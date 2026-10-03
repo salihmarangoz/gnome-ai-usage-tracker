@@ -77,6 +77,8 @@ gnome-extensions enable ai-usage-tracker@salihmarangoz.github.io
   expired, run the CLI once and it will refresh it.
 - No other network requests, no telemetry.
 
+To report a security problem, see [SECURITY.md](SECURITY.md).
+
 The usage endpoints are the ones the official apps use. They are not a public
 API and may change without notice, which would break the extension until it is
 updated.
