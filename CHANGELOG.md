@@ -10,6 +10,8 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-10-04
+
 ### Added
 
 - Top bar indicator with the Claude Code and Codex plan limits (5-hour and
