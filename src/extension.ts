@@ -221,7 +221,7 @@ class UsageIndicator extends PanelMenu.Button {
 
         // The app icon is also shown when the top bar has nothing else to click on
         this._panelItems.visible = this._panelItems.get_n_children() > 0;
-        this._icon.visible = !this._panelItems.visible || this._settings.get_boolean('show-app-icon');
+        this._icon.visible = !this._panelItems.visible || this._settings.get_boolean('always-show-app-icon');
     }
 
     private _addPanelItem(provider: Provider, {usage}: Result, bars: BarSize | null) {
@@ -245,13 +245,19 @@ class UsageIndicator extends PanelMenu.Button {
             item.add_child(stack);
         }
 
-        const values = windows.map(w => `${Math.round(shownPercent(w.percent, showRemaining))}%`).join('/');
-        const name = this._settings.get_boolean(`${provider.id}-show-name`) ? `${provider.shortName} ` : '';
-        item.add_child(new St.Label({
-            text: `${name}${values || '–'}`,
-            y_align: Clutter.ActorAlign.CENTER,
-        }));
-        this._panelItems.add_child(item);
+        const text = [];
+        if (this._settings.get_boolean('show-names'))
+            text.push(provider.shortName);
+        if (this._settings.get_boolean('show-text'))
+            text.push(windows.map(w => `${Math.round(shownPercent(w.percent, showRemaining))}%`).join('/') || '–');
+        if (text.length)
+            item.add_child(new St.Label({text: text.join(' '), y_align: Clutter.ActorAlign.CENTER}));
+
+        // With names, text and bars all off there is nothing to show for this service
+        if (item.get_n_children())
+            this._panelItems.add_child(item);
+        else
+            item.destroy();
     }
 
     private _addMenuSection(provider: Provider, {usage, error}: Result) {

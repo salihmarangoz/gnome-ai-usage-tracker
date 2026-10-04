@@ -20,11 +20,13 @@ turns that section into a dated release.
   - Per service: top bar and menu, top bar only, menu only, or disabled.
   - Per service display: usage (bars fill up) or remaining (bars empty).
   - Per service top bar limits: 5-hour, weekly, or both (`19%/18%`).
-  - Per service name on or off and bar colour.
-  - Small bars in the top bar, one per limit with the 5-hour limit on top,
-    with length and thickness sliders.
-  - Show App Icon, off by default: a stock gauge from the icon theme, or a
-    question mark if the theme has none.
+  - Per service bar colour.
+  - Top bar: service names, usage text and small bars (one per limit, the
+    5-hour limit on top) can each be turned on or off; bar length and
+    thickness sliders.
+  - Always Show App Icon, off by default. The icon (a stock gauge from the
+    icon theme, or a question mark if the theme has none) also appears
+    whenever the top bar has nothing else to show.
   - Refresh interval per service: Claude 5 to 120 minutes, Codex 1 to 120,
     10 by default.
   - About section with version, links and license.

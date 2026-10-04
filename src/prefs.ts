@@ -124,19 +124,23 @@ export default class AiUsagePreferences extends ExtensionPreferences {
     private _appearancePage(settings: Gio.Settings): Adw.PreferencesPage {
         const page = new Adw.PreferencesPage({title: 'Appearance', icon_name: 'applications-graphics-symbolic'});
 
-        const topBar = new Adw.PreferencesGroup({title: 'Top Bar'});
+        const topBar = new Adw.PreferencesGroup({title: 'General', description: 'What the top bar shows'});
+        topBar.add(switchRow(settings, 'show-names', 'Show Service Names'));
+        topBar.add(switchRow(settings, 'show-text', 'Show Usage Text', 'Percentages, like 19%/18%'));
         topBar.add(switchRow(settings, 'show-bars', 'Show Bars',
             'One small bar per limit, the 5-hour limit on top'));
-        topBar.add(sliderRow(settings, 'bar-length', 'Bar Length'));
-        topBar.add(sliderRow(settings, 'bar-thickness', 'Bar Thickness'));
-        topBar.add(switchRow(settings, 'show-app-icon', 'Show App Icon',
-            'A gauge, always shown when the top bar has nothing else to show'));
+        for (const [key, title] of [['bar-length', 'Bar Length'], ['bar-thickness', 'Bar Thickness']]) {
+            const row = sliderRow(settings, key, title);
+            settings.bind('show-bars', row, 'sensitive', Gio.SettingsBindFlags.GET);
+            topBar.add(row);
+        }
+        topBar.add(switchRow(settings, 'always-show-app-icon', 'Always Show App Icon',
+            'Otherwise it only appears when the top bar has nothing else to show'));
         page.add(topBar);
 
         for (const {id, title} of SERVICES) {
             const group = new Adw.PreferencesGroup({title});
             group.add(comboRow(settings, `${id}-panel-limits`, LIMITS_CHOICES, 'Top Bar Limits'));
-            group.add(switchRow(settings, `${id}-show-name`, 'Show Name', 'Name next to the numbers in the top bar'));
             group.add(colorRow(settings, `${id}-color`));
             page.add(group);
         }

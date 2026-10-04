@@ -21,10 +21,12 @@ falls back to its weekly limit because its plan has no 5-hour limit):
     only, menu only, or disable it; show usage (bars fill up) or what is
     remaining (bars empty); refresh interval (Claude 5 to 120 minutes, Codex
     1 to 120, default 10)
-  - **Appearance**: small bars in the top bar (one per limit, 5-hour on top)
-    with length and thickness sliders; the app icon, a gauge from your icon
-    theme; and for each service the limits shown in the top bar (5-hour,
-    weekly or both), its name on or off, and its colour
+  - **Appearance**: what the top bar shows (service names, usage text, small
+    bars with one per limit and the 5-hour limit on top), the bar length and
+    thickness, whether to always show the app icon (a gauge from your icon
+    theme, which also appears when nothing else is shown), and for each
+    service the limits shown in the top bar (5-hour, weekly or both) and its
+    colour
   - **About**: version, changelog and links
 
 Supports GNOME Shell 46 – 50.

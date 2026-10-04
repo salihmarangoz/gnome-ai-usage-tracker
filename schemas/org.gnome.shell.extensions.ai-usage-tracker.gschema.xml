@@ -35,10 +35,6 @@
       <default>'both'</default>
       <summary>Claude Code limits shown in the top bar (5-hour, weekly or both)</summary>
     </key>
-    <key name="claude-show-name" type="b">
-      <default>true</default>
-      <summary>Show the Claude name in the top bar</summary>
-    </key>
     <key name="claude-color" type="s">
       <default>'#d97757'</default>
       <summary>Claude Code bar colour</summary>
@@ -77,16 +73,20 @@
       <default>'both'</default>
       <summary>Codex limits shown in the top bar (5-hour, weekly or both)</summary>
     </key>
-    <key name="codex-show-name" type="b">
-      <default>true</default>
-      <summary>Show the Codex name in the top bar</summary>
-    </key>
     <key name="codex-color" type="s">
       <default>'#3584e4'</default>
       <summary>Codex bar colour</summary>
     </key>
 
     <!-- Top bar -->
+    <key name="show-names" type="b">
+      <default>true</default>
+      <summary>Show the service names in the top bar</summary>
+    </key>
+    <key name="show-text" type="b">
+      <default>true</default>
+      <summary>Show the usage percentages in the top bar</summary>
+    </key>
     <key name="show-bars" type="b">
       <default>false</default>
       <summary>Show small usage bars in the top bar</summary>
@@ -101,9 +101,10 @@
       <default>4</default>
       <summary>Thickness of the top bar usage bars in pixels</summary>
     </key>
-    <key name="show-app-icon" type="b">
+    <key name="always-show-app-icon" type="b">
       <default>false</default>
-      <summary>Show the gauge icon in the top bar</summary>
+      <summary>Always show the gauge icon in the top bar</summary>
+      <description>The icon is shown anyway when the top bar has nothing else to show.</description>
     </key>
   </schema>
 </schemalist>
