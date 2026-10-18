@@ -10,6 +10,11 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The used part of a bar has round ends like the bar itself; it was square,
+  most visibly at low usage. Any usage above 0% shows at least a dot.
+
 ## [0.0.1] - 2026-10-04
 
 ### Added

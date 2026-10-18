@@ -35,6 +35,9 @@ interface BarSize {
     thickness: number;
 }
 
+// The top bar sizes come from the settings
+const MENU_BAR: BarSize = {length: 120, thickness: 6};
+
 function clamp(percent: number): number {
     return Math.min(Math.max(percent, 0), 100);
 }
@@ -43,19 +46,22 @@ function shownPercent(percent: number, showRemaining: boolean): number {
     return showRemaining ? 100 - clamp(percent) : clamp(percent);
 }
 
-function usageBar(percent: number, showRemaining: boolean, color: string, size?: BarSize): St.Widget {
-    const sizeStyle = size
-        ? `width: ${size.length}px; height: ${size.thickness}px; border-radius: ${size.thickness / 2}px;`
-        : '';
+function barStyle(length: number, thickness: number): string {
+    return `width: ${length}px; height: ${thickness}px; border-radius: ${thickness / 2}px;`;
+}
+
+function usageBar(percent: number, showRemaining: boolean, color: string, size: BarSize): St.Widget {
     const bar = new St.Widget({
         style_class: 'ai-usage-bar',
-        style: sizeStyle,
+        style: barStyle(size.length, size.thickness),
         y_align: Clutter.ActorAlign.CENTER,
     });
+    // Sized, not scaled: scale_x would squash the round ends. Any usage shows at least a dot.
+    const shown = shownPercent(percent, showRemaining);
+    const length = shown > 0 ? Math.max(Math.round(size.length * shown / 100), size.thickness) : 0;
     const fill = new St.Widget({
         style_class: 'ai-usage-bar-fill',
-        style: sizeStyle,
-        scale_x: shownPercent(percent, showRemaining) / 100,
+        style: barStyle(length, size.thickness),
     });
     // The warning colours override the service colour close to the limit
     if (percent >= 90)
@@ -90,7 +96,7 @@ class UsageItem extends PopupMenu.PopupMenuItem {
         super(name, {reactive: false, can_focus: false});
         this.label.add_style_class_name('ai-usage-name');
 
-        this.add_child(usageBar(percent, showRemaining, color));
+        this.add_child(usageBar(percent, showRemaining, color, MENU_BAR));
 
         this.add_child(new St.Label({
             text: `${Math.round(shownPercent(percent, showRemaining))}% ${showRemaining ? 'left' : 'used'}`,

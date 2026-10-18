@@ -2,13 +2,6 @@
   min-width: 4.5em;
 }
 
-.ai-usage-bar,
-.ai-usage-bar-fill {
-  width: 120px;
-  height: 6px;
-  border-radius: 3px;
-}
-
 .ai-usage-bar {
   margin: 0 8px;
   background-color: rgba(127, 127, 127, 0.3);
