@@ -1,3 +1,5 @@
+<p align="center"><img src="icon/icon.png" alt="Icon" width="128"></p>
+
 # AI Usage Tracker
 
 A GNOME Shell extension that shows how much of your **Claude Code** and
@@ -130,7 +132,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Changes are listed in
 
 This extension was written with substantial help from an AI coding assistant.
 [Claude Code](https://claude.com/claude-code) (Anthropic, model Claude Opus 5.5)
-generated most of the code, the documentation and this README from the
+generated most of the code, the documentation, the icon and this README from the
 maintainer's instructions. The maintainer reviews and tests every change.
 Because the code is mostly AI-generated, the extension is not published on
 extensions.gnome.org (see [Installation](#installation)).
@@ -145,6 +147,7 @@ problems or security issues caused by using it. Use it at your own risk.
 
 [MIT](LICENSE)
 
-Claude and Claude Code are trademarks of Anthropic. Codex and ChatGPT are
+Claude and Claude Code are trademarks of Anthropic, and the mascot in the
+icon is Anthropic's Claude Code mascot. Codex and ChatGPT are
 trademarks of OpenAI. This project is not affiliated with or endorsed by
 either company.

@@ -23,6 +23,7 @@ Not shipped in the zip:
 | `package.json`, `tsconfig.json` | TypeScript compiler and type packages |
 | `tools/release.py` | Sets `version-name` and dates the changelog (`make release`) |
 | `tools/release_notes.py` | Prints one version's CHANGELOG section (release notes) |
+| `icon/make_icon.py` | Draws the repo folder icon (`icon/icon.svg`, `icon/icon.png`) |
 | `.github/workflows/release.yml` | Builds the zip and publishes a GitHub release for every `v*` tag |
 | `CHANGELOG.md` | Release notes, newest first |
 

@@ -64,9 +64,6 @@ Alt+F2 → `r`. Logs: `journalctl -f -o cat /usr/bin/gnome-shell`.
   them from there.
 - Types target GNOME 50, the runtime minimum is GNOME 46: verify new APIs
   against GNOME 46 before using them.
-- No custom logo or artwork (maintainer's decision). The top bar icon is a
-  stock theme icon: `speedometer-symbolic`, else
-  `power-profile-balanced-symbolic`, else `dialog-question-symbolic`.
 - Add every user-visible change to the Unreleased section of `CHANGELOG.md`.
   The version lives only in `metadata.json` (`version-name`); change it
   with `make release VERSION=x.y`, not by hand.
