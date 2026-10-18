@@ -9,7 +9,7 @@
     "49",
     "50"
   ],
-  "version-name": "0.0.1",
+  "version-name": "0.0.2",
   "url": "https://github.com/salihmarangoz/gnome-ai-usage-tracker",
   "settings-schema": "org.gnome.shell.extensions.ai-usage-tracker"
 }

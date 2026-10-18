@@ -10,6 +10,8 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-10-18
+
 ### Fixed
 
 - The used part of a bar has round ends like the bar itself; it was square,
