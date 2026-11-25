@@ -1,0 +1,9 @@
+[Unit]
+Description=Read the Antigravity (agy) quota for AI Usage Tracker
+Documentation=https://github.com/salihmarangoz/gnome-ai-usage-tracker
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/agy-usage-snapshot
+Nice=10
+TimeoutStartSec=180

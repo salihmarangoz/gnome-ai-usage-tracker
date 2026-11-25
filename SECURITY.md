@@ -31,6 +31,10 @@ Only the latest version on the `main` branch gets security fixes.
   `api.anthropic.com` for Claude Code and `chatgpt.com` for Codex.
 - It never writes, refreshes, logs or stores tokens, and makes no other
   network requests. There is no telemetry.
+- For Antigravity it reads no token, only the file of the optional
+  `agy-usage-snapshot` helper. The helper starts agy, which uses its own
+  login; the helper reads agy's screen and removes its own `/usage` line from
+  agy's prompt history.
 
 The extension runs inside GNOME Shell with your user's permissions. Anyone who
 can change its files can change what it does with your tokens, so install it

@@ -1,0 +1,305 @@
+#!/usr/bin/python3 -I
+"""Write the Antigravity (agy) plan quota to a file for AI Usage Tracker.
+
+agy has no command that prints the quota, only the interactive /usage screen.
+This script starts agy in a private, headless tmux server, opens /usage,
+reads the screen and writes $XDG_CACHE_HOME/agy-usage/usage.json. No prompt
+is sent to a model, so no quota is used.
+
+Without --force it only starts agy when something can have changed: agy was
+used since the last snapshot, a limit has reset, the last try failed, or the
+snapshot is older than MAX_AGE. agy-usage.timer runs it every 10 minutes.
+
+It does not start agy while the GNOME login keyring is locked, because agy
+would then show the keyring password prompt.
+
+Needs: agy (tested with 1.5.17), tmux, busctl.
+"""
+import fcntl
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HOME = Path.home()
+AGY = shutil.which("agy", path=f"{os.environ.get('PATH', '')}:{HOME}/.local/bin")
+AGY_DIR = HOME / ".gemini/antigravity-cli"
+STATE = Path(os.environ.get("XDG_CACHE_HOME") or HOME / ".cache") / "agy-usage"
+WORKSPACE = STATE / "ws"          # empty folder agy is started in
+LOG = STATE / "log/agy.log"       # agy's log for our runs, kept out of AGY_DIR
+OUT = STATE / "usage.json"
+TMUX = ["tmux", "-L", "agy-usage"]
+MAX_AGE = 3 * 3600
+WINDOW_SECONDS = {"weekly": 7 * 86400, "five hour": 5 * 3600, "daily": 86400}
+
+
+def log(msg):
+    print(msg, file=sys.stderr, flush=True)
+
+
+def load_previous():
+    try:
+        return json.loads(OUT.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def write_snapshot(data):
+    tmp = OUT.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=1))
+    os.replace(tmp, OUT)
+
+
+def last_agy_activity():
+    """Newest mtime of agy's own session logs (our runs log elsewhere)."""
+    newest = 0.0
+    try:
+        for entry in os.scandir(AGY_DIR / "log"):
+            newest = max(newest, entry.stat(follow_symlinks=False).st_mtime)
+    except OSError:
+        pass
+    return newest
+
+
+def needs_update(prev, now):
+    updated = prev.get("updated", 0)
+    activity = last_agy_activity()
+    if prev.get("error"):
+        failed = prev.get("errorAt", 0)
+        # After a failure wait an hour unless agy was used since, which is
+        # also how a locked keyring gets unlocked
+        if now - failed < 3600 and activity <= failed:
+            return None
+        return "the last try failed"
+    if not prev.get("groups"):
+        return "no snapshot yet"
+    if now - updated > MAX_AGE:
+        return "snapshot is old"
+    if activity > updated:
+        return "agy was used"
+    for group in prev["groups"]:
+        for w in group["windows"]:
+            if w.get("resetsAt") and updated < w["resetsAt"] <= now:
+                return "a limit has reset"
+    return None
+
+
+def keyring_locked():
+    try:
+        out = subprocess.run(
+            ["busctl", "--user", "get-property", "org.freedesktop.secrets",
+             "/org/freedesktop/secrets/collection/login",
+             "org.freedesktop.Secret.Collection", "Locked"],
+            capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return out.strip() == "b true"
+
+
+def tmux(*args, check=False):
+    return subprocess.run(TMUX + list(args), capture_output=True, text=True,
+                          timeout=15, check=check)
+
+
+def screen():
+    out = tmux("capture-pane", "-p", "-J", "-t", "u").stdout
+    return [line.rstrip() for line in out.splitlines()]
+
+
+def wait_for(test, seconds, step=0.5):
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        lines = screen()
+        if test(lines):
+            return lines
+        time.sleep(step)
+    return None
+
+
+def has(lines, pattern):
+    return any(re.search(pattern, line) for line in lines)
+
+
+def read_usage_screen():
+    """Start agy, open /usage and return (start screen, usage screen)."""
+    WORKSPACE.mkdir(parents=True, exist_ok=True)
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    LOG.unlink(missing_ok=True)
+    tmux("kill-server")
+    tmux("new-session", "-d", "-s", "u", "-x", "200", "-y", "80",
+         "-c", str(WORKSPACE), f"{AGY} --log-file {LOG}", check=True)
+    try:
+        boot = None
+        trusted = dismissed = False
+        end = time.monotonic() + 60
+        while time.monotonic() < end:
+            lines = screen()
+            if not lines and tmux("has-session", "-t", "u").returncode:
+                raise RuntimeError("agy exited at start")
+            if has(lines, r"(?i)not signed in|not logged in|sign in with google"):
+                raise RuntimeError("agy is not signed in")
+            if not trusted and has(lines, r"Do you trust the contents"):
+                # Our own empty folder; Enter picks the first choice, "Yes"
+                tmux("send-keys", "-t", "u", "Enter")
+                trusted = True
+            elif not dismissed and has(lines, r"esc to dismiss"):
+                tmux("send-keys", "-t", "u", "Escape")
+                dismissed = True
+            elif has(lines, r"^\? for shortcuts"):
+                boot = lines
+                break
+            time.sleep(0.5)
+        if boot is None:
+            raise RuntimeError("agy did not get ready in 60 s")
+        # The plan name, as in "name@example.com (Google AI Pro)", comes a
+        # moment after the prompt; waiting for it also lets the UI settle
+        boot = wait_for(lambda l: has(l, r"@\S+\s+\("), 8) or boot
+        tmux("send-keys", "-t", "u", "-l", "/usage")
+        if not wait_for(lambda l: has(l, r"View model quota usage"), 10):
+            raise RuntimeError("/usage did not show up in the command list")
+        tmux("send-keys", "-t", "u", "Enter")
+        lines = wait_for(lambda l: has(l, r"Limit Remaining")
+                         and has(l, r"esc Close"), 30)
+        if lines is None:
+            raise RuntimeError("the /usage screen did not open in 30 s")
+        previous = None
+        for _ in range(10):  # until the screen stops changing
+            time.sleep(1)
+            lines = screen()
+            if lines == previous:
+                break
+            previous = lines
+        tmux("send-keys", "-t", "u", "Escape")
+        return boot, lines
+    finally:
+        tmux("kill-server")
+
+
+def parse_duration(text):
+    units = {"d": 86400, "h": 3600, "m": 60, "s": 1}
+    parts = re.findall(r"(\d+)\s*([dhms])\b", text)
+    return sum(int(n) * units[u] for n, u in parts) if parts else None
+
+
+def parse(boot, lines, now):
+    plan = None
+    for line in boot:
+        m = re.search(r"@\S+\s+\(([^()]+)\)\s*$", line)
+        if m:
+            plan = m.group(1)
+    groups, group, window = [], None, None
+    for raw in lines:
+        line = raw.strip(" │")
+        m = re.fullmatch(r"([A-Z][A-Z0-9 &/]+) MODELS", line)
+        if m:
+            group = {"name": m.group(1), "windows": [],
+                     "id": re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-")}
+            groups.append(group)
+            window = None
+            continue
+        m = re.fullmatch(r"(.+?) Limit Remaining", line)
+        if m and group is not None:
+            kind = m.group(1).lower()
+            window = {"name": "5-hour" if kind == "five hour" else m.group(1),
+                      "seconds": WINDOW_SECONDS.get(kind),
+                      "remaining": None, "resetsAt": None}
+            group["windows"].append(window)
+            continue
+        if window is None:
+            continue
+        m = re.search(r"\]\s*(\d+(?:\.\d+)?)%", line)
+        if m and window["remaining"] is None:
+            window["remaining"] = float(m.group(1))
+            continue
+        if line.startswith("Refreshes in"):
+            seconds = parse_duration(line)
+            if seconds is not None:
+                window["resetsAt"] = int(now + seconds)
+            window = None
+        elif line.startswith("Quota available"):
+            window = None
+    for g in groups:
+        g["windows"] = [w for w in g["windows"] if w["remaining"] is not None]
+    groups = [g for g in groups if g["windows"]]
+    if not groups:
+        raise RuntimeError("could not read any limit from the /usage screen")
+    return plan, groups
+
+
+def drop_our_history():
+    """Remove the /usage lines our runs added to agy's prompt history.
+
+    agy's up-arrow history is shared by all folders, so our runs would show
+    up in the user's own sessions. The file is rewritten in place (same
+    inode) so a running agy that appends to it keeps the right file.
+    """
+    path = AGY_DIR / "history.jsonl"
+    ours = f'"workspace":"{WORKSPACE}"'.encode()
+    try:
+        with open(path, "r+b") as f:
+            data = f.read()
+            lines = data.splitlines(keepends=True)
+            keep = [l for l in lines if ours not in l.replace(b'": "', b'":"')]
+            if len(keep) == len(lines):
+                return
+            if os.fstat(f.fileno()).st_size != len(data):
+                return  # agy wrote meanwhile; the next run cleans up
+            f.seek(0)
+            f.write(b"".join(keep))
+            f.truncate()
+    except OSError as e:
+        log(f"history cleanup skipped: {e}")
+
+
+def main():
+    force = "--force" in sys.argv[1:]
+    STATE.mkdir(parents=True, exist_ok=True)
+    with open(STATE / "lock", "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            log("another run is going on")
+            return 0
+        now = time.time()
+        prev = load_previous()
+        reason = "forced" if force else needs_update(prev, now)
+        if not reason:
+            return 0
+        if not AGY:
+            prev.update(error="agy not found", errorAt=int(now))
+            write_snapshot(prev)
+            log("agy not found in PATH or ~/.local/bin")
+            return 1
+        if keyring_locked():
+            prev.update(error="Keyring locked, start agy once and unlock it",
+                        errorAt=int(now))
+            write_snapshot(prev)
+            log("keyring locked, agy not started")
+            return 0
+        log(f"reading /usage ({reason})")
+        try:
+            boot, lines = read_usage_screen()
+            plan, groups = parse(boot, lines, time.time())
+        except Exception as e:  # keep the last good data, note the error
+            prev.update(error=f"agy /usage: {e}", errorAt=int(now))
+            write_snapshot(prev)
+            log(f"failed: {e}")
+            return 1
+        finally:
+            drop_our_history()
+        write_snapshot({"updated": int(time.time()), "plan": plan,
+                        "groups": groups, "error": None})
+        summary = "; ".join(
+            f"{g['name']}: " + ", ".join(f"{w['name']} {w['remaining']}%"
+                                         for w in g["windows"])
+            for g in groups)
+        log(f"ok: {summary}")
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

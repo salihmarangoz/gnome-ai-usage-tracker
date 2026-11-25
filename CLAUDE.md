@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 GNOME Shell extension (`ai-usage-tracker@salihmarangoz.github.io`) that shows
-Claude Code and Codex plan usage in the top bar. License: MIT.
+Claude Code, Codex and Antigravity plan usage in the top bar. License: MIT.
 
 Distributed from GitHub only. The maintainer decided not to publish it on
 extensions.gnome.org (EGO) because EGO does not accept AI-generated
@@ -53,6 +53,9 @@ Alt+F2 → `r`. Logs: `journalctl -f -o cat /usr/bin/gnome-shell`.
   `enable()`, clean up in `disable()`, no sync IO in the shell, no logging spam.
 - Never refresh, write or copy the CLI tokens. Only read the access token and
   send it to the service that issued it.
+- Antigravity comes from the `antigravity/agy-usage-snapshot` helper (not in
+  the zip, Python standard library only); the extension only reads its file
+  (see `docs/ARCHITECTURE.md` → Antigravity).
 - `shell-version` must only list released GNOME versions; shexli currently
   rejects anything above 50.
 - Do not put `gschemas.compiled`, docs, Makefile or other non-runtime files

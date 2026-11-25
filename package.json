@@ -2,7 +2,7 @@
   "name": "gnome-ai-usage-tracker",
   "version": "0.0.0",
   "private": true,
-  "description": "GNOME Shell extension showing Claude Code and Codex plan usage",
+  "description": "GNOME Shell extension showing Claude Code, Codex and Antigravity plan usage",
   "license": "MIT",
   "type": "module",
   "scripts": {

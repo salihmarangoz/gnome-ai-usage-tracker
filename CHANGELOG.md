@@ -10,6 +10,13 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+### Added
+
+- Antigravity: the Gemini and the Claude/GPT model groups of agy, the
+  Antigravity CLI, each with its weekly and 5-hour limit. They need the new
+  `agy-usage-snapshot` helper (`make install-agy`), which reads agy's
+  `/usage` screen, and are off by default.
+
 ## [0.0.2] - 2026-10-18
 
 ### Fixed

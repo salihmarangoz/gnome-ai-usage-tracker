@@ -2,8 +2,9 @@
 
 # AI Usage Tracker
 
-A GNOME Shell extension that shows how much of your **Claude Code** and
-**Codex** plan limits you have used, right in the top bar.
+A GNOME Shell extension that shows how much of your **Claude Code**,
+**Codex** and **Antigravity** plan limits you have used, right in the top bar.
+Antigravity needs a small helper, see [Antigravity](#antigravity).
 
 ![Menu screenshot](docs/screenshot.png)
 
@@ -22,7 +23,7 @@ falls back to its weekly limit because its plan has no 5-hour limit):
   - **Services**, for each service: show it in the top bar and menu, top bar
     only, menu only, or disable it; show usage (bars fill up) or what is
     remaining (bars empty); refresh interval (Claude 5 to 120 minutes, Codex
-    1 to 120, default 10)
+    1 to 120, default 10; Antigravity 1 to 120, default 5)
   - **Appearance**: what the top bar shows (service names, usage text, small
     bars with one per limit and the 5-hour limit on top), the bar length and
     thickness, whether to always show the app icon (a gauge from your icon
@@ -41,6 +42,7 @@ You need to be signed in with a subscription in the command line tools:
 | ----------- | ---------------------------- | ------------------------------ |
 | Claude Code | `claude` → `/login`          | `~/.claude/.credentials.json`  |
 | Codex       | `codex login` (with ChatGPT) | `~/.codex/auth.json`           |
+| Antigravity | `agy` (with Google)          | `~/.cache/agy-usage/usage.json`, written by the [helper](#antigravity) |
 
 `CLAUDE_CONFIG_DIR` and `CODEX_HOME` are respected if they are set in the
 environment of GNOME Shell.
@@ -97,6 +99,30 @@ extension:
 gnome-extensions enable ai-usage-tracker@salihmarangoz.github.io
 ```
 
+### Antigravity
+
+agy, the Antigravity CLI, keeps its login in the system keyring, and its
+access token lasts one hour; agy only refreshes it while it runs. So instead
+of calling a usage endpoint with that token, a small helper reads agy's own
+`/usage` screen and writes the numbers to `~/.cache/agy-usage/usage.json`,
+which the extension shows. The helper needs `agy`, `tmux` and `python3`.
+
+From a clone of this repository:
+
+```sh
+make install-agy
+```
+
+This installs `agy-usage-snapshot` to `~/.local/bin` and a systemd user timer
+that checks every 10 minutes. The helper only starts agy (in a hidden tmux
+session, for about 6 seconds, without sending anything to a model) when agy
+was used since the last reading, a limit has reset, or the reading is older
+than 3 hours.
+
+Then turn on **Antigravity Gemini** in Settings → Services, and
+**Antigravity Claude/GPT** if you use Claude or GPT models through agy. Both
+are off by default. Remove the helper with `make uninstall-agy`.
+
 ## Privacy
 
 - The extension reads the OAuth access token that the CLI already stored on
@@ -105,12 +131,17 @@ gnome-extensions enable ai-usage-tracker@salihmarangoz.github.io
 - Tokens are never written, refreshed or stored anywhere else. If a token has
   expired, run the CLI once and it will refresh it.
 - No other network requests, no telemetry.
+- Antigravity: the extension reads no token, only the helper's file. The
+  helper starts agy, which uses its own login. It removes the `/usage` line it
+  typed from agy's prompt history and does not start agy while the login
+  keyring is locked, so no password prompt appears.
 
 To report a security problem, see [SECURITY.md](SECURITY.md).
 
 The usage endpoints are the ones the official apps use. They are not a public
 API and may change without notice, which would break the extension until it is
-updated.
+updated. The Antigravity helper depends on the layout of agy's `/usage` screen
+in the same way.
 
 ## Troubleshooting
 
@@ -120,6 +151,10 @@ updated.
 | Login expired, run the CLI once to refresh it | Start `claude` or `codex` once         |
 | Too many requests, try again in a few minutes | Claude throttles this endpoint; wait or raise the refresh interval |
 | Request failed (HTTP …)  | The service is down or changed its API; try again later |
+| No data yet, run agy-usage-snapshot --force | Install the Antigravity helper (`make install-agy`) or run the command |
+| Keyring locked, start agy once and unlock it | With automatic login the keyring stays locked; start `agy` once and type your password |
+| No update since … | The helper timer is not running: `systemctl --user status agy-usage.timer` |
+| agy /usage: … | agy changed its `/usage` screen; see `journalctl --user -u agy-usage.service` |
 
 Logs: `journalctl -f -o cat /usr/bin/gnome-shell`
 
@@ -149,5 +184,5 @@ problems or security issues caused by using it. Use it at your own risk.
 
 Claude and Claude Code are trademarks of Anthropic, and the mascot in the
 icon is Anthropic's Claude Code mascot. Codex and ChatGPT are
-trademarks of OpenAI. This project is not affiliated with or endorsed by
-either company.
+trademarks of OpenAI. Antigravity and Gemini are trademarks of Google. This
+project is not affiliated with or endorsed by any of these companies.

@@ -34,6 +34,9 @@ Each provider returns the same shape:
 Errors are thrown as `Error` with a short, user-facing message; the indicator
 shows the message in the menu and `–` in the top bar.
 
+Antigravity does not fit this picture: its providers read a local file, see
+[Antigravity](#antigravity).
+
 ## Claude Code
 
 Credentials: `$CLAUDE_CONFIG_DIR/.credentials.json` (default `~/.claude`)
@@ -99,6 +102,73 @@ Codex also writes the same numbers into its session logs
 `rate_limits` field). That would work offline but is only as fresh as the last
 Codex session, so the live endpoint is used instead.
 
+## Antigravity
+
+agy (the Antigravity CLI) keeps its Google login in the system keyring
+(Secret Service item "Password for 'antigravity' on 'gemini'", attributes
+`service=gemini`, `username=antigravity`). Its access token lasts one hour and
+agy refreshes it only while it runs, so a provider that read it would show
+"Login expired" most of the time. agy gets its quota from an internal
+endpoint (`daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`)
+whose request and response are not documented.
+
+Instead, `antigravity/agy-usage-snapshot` reads agy's own `/usage` screen:
+
+1. Starts `agy --log-file ~/.cache/agy-usage/log/agy.log` in a private tmux
+   server (`tmux -L agy-usage`, 200×80, no window) in the empty folder
+   `~/.cache/agy-usage/ws`, answers agy's folder trust question there with
+   Yes, types `/usage` and waits until the screen stops changing.
+2. Parses every `… MODELS` group and its `Weekly` and `Five Hour Limit
+   Remaining` rows: the percentage, and `Refreshes in 5d 4h 20m` or `Quota
+   available`.
+3. Writes `~/.cache/agy-usage/usage.json`, stops the tmux server and removes
+   the `/usage` line it added to `~/.gemini/antigravity-cli/history.jsonl`
+   (agy shares that up-arrow history between all folders).
+
+During a run agy's log shows only `loadCodeAssist` and `fetchAvailableModels`,
+no model request, and no conversation is created.
+
+The `/usage` screen (agy 1.5.17):
+
+```
+GEMINI MODELS
+  Models within this group: Gemini 4 Neon, Gemini 4 Carbon, Gemini 4 Argon, …
+  Weekly Limit Remaining
+    [██████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 43.58%
+    Refreshes in 5d 4h 20m
+  Five Hour Limit Remaining
+    [██████████████████████████████████████████████████] 100.00%
+    Quota available
+CLAUDE AND GPT MODELS
+  Models within this group: Claude Opus 5.5, Claude Sonnet 5.5, GPT-OSS 120B
+  …
+```
+
+The file:
+
+```json
+{"updated": 1795624394, "plan": "Google AI Pro", "error": null,
+ "groups": [
+  {"id": "gemini", "name": "GEMINI", "windows": [
+   {"name": "Weekly", "seconds": 604800, "remaining": 43.58, "resetsAt": 1796071574},
+   {"name": "5-hour", "seconds": 18000, "remaining": 100.0, "resetsAt": null}]},
+  {"id": "claude-and-gpt", "name": "CLAUDE AND GPT", "windows": […]}]}
+```
+
+The `agy-gemini` and `agy-claude` providers read the group with their id.
+When a run fails the helper keeps the last groups and sets `error`; the
+extension shows the old numbers until they are 6 hours old, then the error. A
+window whose `resetsAt` has passed is shown as unused until the next reading.
+
+When agy is started: `agy-usage.timer` runs the helper every 10 minutes and 2
+minutes after login. It starts agy only when agy was used since the last
+reading (newest file in `~/.gemini/antigravity-cli/log`), a `resetsAt` has
+passed, the reading is older than 3 hours, or the last try failed (then at
+most once an hour unless agy was used). Otherwise it exits in about 40 ms. It
+does not start agy while the `login` keyring collection is locked, which is
+the case after an automatic login, because agy would show the keyring
+password prompt.
+
 ## Rate limits
 
 Neither endpoint documents a rate limit and neither sends rate limit headers.
@@ -110,6 +180,8 @@ Neither endpoint documents a rate limit and neither sends rate limit headers.
   Requests that claim to be Claude Code reportedly get a looser limit; the
   extension does not fake its User-Agent.
 - **Codex:** the Codex CLI itself polls `/wham/usage` every 60 s.
+- **Antigravity:** the extension only reads a local file; the helper decides
+  when agy runs (see above).
 
 So every service has its own timer: Claude 5 to 120 minutes, Codex 1 to 120,
 both 10 by default. A 429 is shown as "Too many requests" in the menu.

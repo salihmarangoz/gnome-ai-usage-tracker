@@ -1,7 +1,7 @@
 {
   "uuid": "ai-usage-tracker@salihmarangoz.github.io",
   "name": "AI Usage Tracker",
-  "description": "Shows how much of your Claude Code and Codex plan limits you have used (5-hour and weekly windows) in the top bar.\n\nThe extension reads the login tokens that the Claude Code and Codex command line tools store in ~/.claude/.credentials.json and ~/.codex/auth.json. Each token is only sent to its own service (api.anthropic.com or chatgpt.com) to fetch your usage. Tokens are never modified or refreshed, and no other data leaves your computer.\n\nThis extension is not affiliated with Anthropic or OpenAI.",
+  "description": "Shows how much of your Claude Code, Codex and Antigravity plan limits you have used (5-hour and weekly windows) in the top bar.\n\nThe extension reads the login tokens that the Claude Code and Codex command line tools store in ~/.claude/.credentials.json and ~/.codex/auth.json. Each token is only sent to its own service (api.anthropic.com or chatgpt.com) to fetch your usage. Tokens are never modified or refreshed, and no other data leaves your computer.\n\nAntigravity is read from a file written by the optional agy-usage-snapshot helper from the GitHub repository; no Antigravity token is read.\n\nThis extension is not affiliated with Anthropic, OpenAI or Google.",
   "shell-version": [
     "46",
     "47",

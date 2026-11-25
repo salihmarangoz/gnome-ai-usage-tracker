@@ -3,6 +3,9 @@
 // Reads the OAuth tokens that the Claude Code and Codex CLIs store on disk and
 // asks each service for the current plan usage. Tokens are only read, never
 // refreshed or written, so the CLIs stay in charge of the login.
+//
+// Antigravity is read from the file that antigravity/agy-usage-snapshot
+// writes, see docs/ARCHITECTURE.md.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -64,15 +67,33 @@ interface CodexUsage {
     rate_limit: {primary_window: CodexWindow | null, secondary_window: CodexWindow | null} | null;
 }
 
+interface AgyWindow {
+    name: string;
+    seconds: number | null;
+    remaining: number;
+    resetsAt: number | null;
+}
+
+interface AgySnapshot {
+    updated: number;
+    plan: string | null;
+    groups?: {id: string, windows: AgyWindow[]}[];
+    error: string | null;
+}
+
+// The helper refreshes the snapshot within minutes of any agy use, so an older
+// one means the helper is not running
+const AGY_STALE = 6 * 3600;
+
 const decoder = new TextDecoder();
 
-async function readJson<T>(path: string, cancellable: Gio.Cancellable): Promise<T> {
+async function readJson<T>(path: string, cancellable: Gio.Cancellable, missing = 'Not signed in'): Promise<T> {
     try {
         const [contents] = await Gio.File.new_for_path(path).load_contents_async(cancellable);
         return JSON.parse(decoder.decode(contents)) as T;
     } catch (e) {
         if (e instanceof GLib.Error && e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
-            throw new Error('Not signed in');
+            throw new Error(missing);
         throw e;
     }
 }
@@ -167,4 +188,46 @@ const codex: Provider = {
     },
 };
 
-export const PROVIDERS: Provider[] = [claude, codex];
+function antigravity(id: string, name: string, shortName: string, groupId: string): Provider {
+    return {
+        id,
+        name,
+        shortName,
+
+        async fetch(_session, cancellable) {
+            const path = `${GLib.get_user_cache_dir()}/agy-usage/usage.json`;
+            const data = await readJson<AgySnapshot>(path, cancellable,
+                'No data yet, run agy-usage-snapshot --force');
+            const group = data.groups?.find(g => g.id === groupId);
+            if (!group)
+                throw new Error(data.error ?? 'No such group in agy /usage');
+
+            const now = Date.now() / 1000;
+            if (now - data.updated > AGY_STALE) {
+                const since = GLib.DateTime.new_from_unix_local(data.updated).format('%a %H:%M');
+                throw new Error(`No update since ${since}${data.error ? `: ${data.error}` : ''}`);
+            }
+
+            return {
+                plan: data.plan,
+                windows: group.windows.map(w => {
+                    // A limit whose refresh time has passed is full again until the next snapshot
+                    const reset = w.resetsAt !== null && w.resetsAt <= now;
+                    return {
+                        name: w.name,
+                        seconds: w.seconds ?? 7 * 24 * 3600,
+                        percent: reset ? 0 : 100 - w.remaining,
+                        resetsAt: reset ? null : w.resetsAt,
+                    };
+                }),
+            };
+        },
+    };
+}
+
+export const PROVIDERS: Provider[] = [
+    claude,
+    codex,
+    antigravity('agy-gemini', 'Antigravity Gemini', 'Gemini', 'gemini'),
+    antigravity('agy-claude', 'Antigravity Claude/GPT', 'AG Claude', 'claude-and-gpt'),
+];

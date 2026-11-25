@@ -78,6 +78,83 @@
       <summary>Codex bar colour</summary>
     </key>
 
+    <!-- Antigravity, Gemini models. Off by default: needs the agy-usage-snapshot helper -->
+    <key name="agy-gemini-show" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="panel"/>
+        <choice value="menu"/>
+        <choice value="off"/>
+      </choices>
+      <default>'off'</default>
+      <summary>Where to show Antigravity Gemini usage</summary>
+    </key>
+    <key name="agy-gemini-display" type="s">
+      <choices>
+        <choice value="usage"/>
+        <choice value="remaining"/>
+      </choices>
+      <default>'usage'</default>
+      <summary>Show what is used or what is remaining of Antigravity Gemini</summary>
+    </key>
+    <key name="agy-gemini-refresh-interval" type="u">
+      <!-- Only re-reads the helper's file; the helper decides when to run agy -->
+      <range min="1" max="120"/>
+      <default>5</default>
+      <summary>Minutes between Antigravity Gemini usage updates</summary>
+    </key>
+    <key name="agy-gemini-panel-limits" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="short"/>
+        <choice value="long"/>
+      </choices>
+      <default>'both'</default>
+      <summary>Antigravity Gemini limits shown in the top bar (5-hour, weekly or both)</summary>
+    </key>
+    <key name="agy-gemini-color" type="s">
+      <default>'#9a6dd7'</default>
+      <summary>Antigravity Gemini bar colour</summary>
+    </key>
+
+    <!-- Antigravity, Claude and GPT models -->
+    <key name="agy-claude-show" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="panel"/>
+        <choice value="menu"/>
+        <choice value="off"/>
+      </choices>
+      <default>'off'</default>
+      <summary>Where to show Antigravity Claude/GPT usage</summary>
+    </key>
+    <key name="agy-claude-display" type="s">
+      <choices>
+        <choice value="usage"/>
+        <choice value="remaining"/>
+      </choices>
+      <default>'usage'</default>
+      <summary>Show what is used or what is remaining of Antigravity Claude/GPT</summary>
+    </key>
+    <key name="agy-claude-refresh-interval" type="u">
+      <range min="1" max="120"/>
+      <default>5</default>
+      <summary>Minutes between Antigravity Claude/GPT usage updates</summary>
+    </key>
+    <key name="agy-claude-panel-limits" type="s">
+      <choices>
+        <choice value="both"/>
+        <choice value="short"/>
+        <choice value="long"/>
+      </choices>
+      <default>'both'</default>
+      <summary>Antigravity Claude/GPT limits shown in the top bar (5-hour, weekly or both)</summary>
+    </key>
+    <key name="agy-claude-color" type="s">
+      <default>'#2ec27e'</default>
+      <summary>Antigravity Claude/GPT bar colour</summary>
+    </key>
+
     <!-- Top bar -->
     <key name="show-names" type="b">
       <default>true</default>

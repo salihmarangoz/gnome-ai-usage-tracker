@@ -27,9 +27,13 @@ const LIMITS_CHOICES: Choices = [
     ['long', 'Weekly Only'],
 ];
 
+const AGY_DESCRIPTION = 'Reads the agy /usage snapshot from the agy-usage-snapshot helper (see README)';
+
 const SERVICES = [
-    {id: 'claude', title: 'Claude Code', file: '~/.claude/.credentials.json'},
-    {id: 'codex', title: 'Codex', file: '~/.codex/auth.json'},
+    {id: 'claude', title: 'Claude Code', description: 'Uses the login in ~/.claude/.credentials.json'},
+    {id: 'codex', title: 'Codex', description: 'Uses the login in ~/.codex/auth.json'},
+    {id: 'agy-gemini', title: 'Antigravity Gemini', description: AGY_DESCRIPTION},
+    {id: 'agy-claude', title: 'Antigravity Claude/GPT', description: AGY_DESCRIPTION},
 ];
 
 // The allowed range of a number setting lives in the schema
@@ -110,8 +114,8 @@ export default class AiUsagePreferences extends ExtensionPreferences {
 
     private _servicesPage(settings: Gio.Settings): Adw.PreferencesPage {
         const page = new Adw.PreferencesPage({title: 'Services', icon_name: 'network-server-symbolic'});
-        for (const {id, title, file} of SERVICES) {
-            const group = new Adw.PreferencesGroup({title, description: `Uses the login in ${file}`});
+        for (const {id, title, description} of SERVICES) {
+            const group = new Adw.PreferencesGroup({title, description});
             group.add(comboRow(settings, `${id}-show`, SHOW_CHOICES, 'Show'));
             group.add(comboRow(settings, `${id}-display`, DISPLAY_CHOICES, 'Display',
                 'Usage fills the bars, remaining empties them'));
@@ -151,7 +155,7 @@ export default class AiUsagePreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage({title: 'About', icon_name: 'help-about-symbolic'});
         const group = new Adw.PreferencesGroup({
             title: this.metadata.name,
-            description: `Version ${this.metadata['version-name']}. Not affiliated with Anthropic or OpenAI.`,
+            description: `Version ${this.metadata['version-name']}. Not affiliated with Anthropic, OpenAI or Google.`,
         });
         page.add(group);
 
