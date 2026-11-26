@@ -10,6 +10,8 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-11-26
+
 ### Added
 
 - Antigravity: the Gemini and the Claude/GPT model groups of agy, the
