@@ -10,6 +10,17 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Antigravity: a changed group heading on agy's `/usage` screen no longer puts
+  that group's limits under Gemini; an unexpected screen is an error.
+- Antigravity: after a failed reading, a limit whose reset time has passed
+  shows the error instead of "unused".
+- The Antigravity helper no longer starts agy while the extension, or both
+  Antigravity services, are off, or when the keyring state cannot be checked.
+- The helper's hidden tmux no longer loads your `~/.tmux.conf`, works with
+  spaces in paths, says when tmux is missing, and keeps its files private.
+
 ## [0.0.3] - 2026-11-26
 
 ### Added

@@ -207,6 +207,9 @@ function antigravity(id: string, name: string, shortName: string, groupId: strin
                 const since = GLib.DateTime.new_from_unix_local(data.updated).format('%a %H:%M');
                 throw new Error(`No update since ${since}${data.error ? `: ${data.error}` : ''}`);
             }
+            // After a failed reading, a limit that has reset since is not known to be unused
+            if (data.error && group.windows.some(w => w.resetsAt !== null && w.resetsAt <= now))
+                throw new Error(data.error);
 
             return {
                 plan: data.plan,

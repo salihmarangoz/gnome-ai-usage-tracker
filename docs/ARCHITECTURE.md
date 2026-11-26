@@ -115,12 +115,17 @@ whose request and response are not documented.
 Instead, `antigravity/agy-usage-snapshot` reads agy's own `/usage` screen:
 
 1. Starts `agy --log-file ~/.cache/agy-usage/log/agy.log` in a private tmux
-   server (`tmux -L agy-usage`, 200×80, no window) in the empty folder
+   server (`tmux -L agy-usage -f /dev/null`, so not with the user's
+   `tmux.conf`; 200×80, no window) in the empty folder
    `~/.cache/agy-usage/ws`, answers agy's folder trust question there with
    Yes, types `/usage` and waits until the screen stops changing.
-2. Parses every `… MODELS` group and its `Weekly` and `Five Hour Limit
-   Remaining` rows: the percentage, and `Refreshes in 5d 4h 20m` or `Quota
-   available`.
+2. Parses every group and its `Weekly` and `Five Hour Limit Remaining`
+   rows: the percentage, and `Refreshes in 5d 4h 20m` or `Quota available`.
+   A group starts at the line above `Models within this group:`, so a renamed
+   heading gives a new group id (and "No such group" in the extension)
+   instead of adding its rows to the group above. A row outside a group, a
+   limit shown twice in a group or a limit without a percentage fails the
+   run. `antigravity/test_agy_usage_snapshot.py` has the agy 1.5.17 screen.
 3. Writes `~/.cache/agy-usage/usage.json`, stops the tmux server and removes
    the `/usage` line it added to `~/.gemini/antigravity-cli/history.jsonl`
    (agy shares that up-arrow history between all folders).
@@ -158,16 +163,23 @@ The file:
 The `agy-gemini` and `agy-claude` providers read the group with their id.
 When a run fails the helper keeps the last groups and sets `error`; the
 extension shows the old numbers until they are 6 hours old, then the error. A
-window whose `resetsAt` has passed is shown as unused until the next reading.
+window whose `resetsAt` has passed is shown as unused until the next reading;
+if the last run failed, the extension shows the error instead, because the
+usage since the reset is not known.
 
 When agy is started: `agy-usage.timer` runs the helper every 10 minutes and 2
-minutes after login. It starts agy only when agy was used since the last
+minutes after login. Without `--force` it does nothing unless GNOME Shell
+runs the extension (`enabled-extensions`, `disable-user-extensions`) with
+`agy-gemini-show` or `agy-claude-show` not `off`, read with `gsettings
+--schemadir` from the installed extension. It starts agy only when agy was used since the last
 reading (newest file in `~/.gemini/antigravity-cli/log`), a `resetsAt` has
 passed, the reading is older than 3 hours, or the last try failed (then at
 most once an hour unless agy was used). Otherwise it exits in about 40 ms. It
-does not start agy while the `login` keyring collection is locked, which is
-the case after an automatic login, because agy would show the keyring
-password prompt.
+starts agy only when the Secret Service answers that the default keyring
+(`/org/freedesktop/secrets/aliases/default`) is unlocked; locked, which is
+the case after an automatic login, or no answer means agy would show the
+keyring password prompt. A locked keyring is checked again on every run.
+The cache folder is private (0700) and its files 0600.
 
 ## Rate limits
 

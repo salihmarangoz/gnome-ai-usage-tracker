@@ -117,7 +117,8 @@ This installs `agy-usage-snapshot` to `~/.local/bin` and a systemd user timer
 that checks every 10 minutes. The helper only starts agy (in a hidden tmux
 session, for about 6 seconds, without sending anything to a model) when agy
 was used since the last reading, a limit has reset, or the reading is older
-than 3 hours.
+than 3 hours, and only while an Antigravity service is turned on in the
+extension.
 
 Then turn on **Antigravity Gemini** in Settings → Services, and
 **Antigravity Claude/GPT** if you use Claude or GPT models through agy. Both
@@ -134,7 +135,7 @@ are off by default. Remove the helper with `make uninstall-agy`.
 - Antigravity: the extension reads no token, only the helper's file. The
   helper starts agy, which uses its own login. It removes the `/usage` line it
   typed from agy's prompt history and does not start agy while the login
-  keyring is locked, so no password prompt appears.
+  keyring is locked or cannot be checked, so no password prompt appears.
 
 To report a security problem, see [SECURITY.md](SECURITY.md).
 
@@ -153,8 +154,9 @@ in the same way.
 | Request failed (HTTP …)  | The service is down or changed its API; try again later |
 | No data yet, run agy-usage-snapshot --force | Install the Antigravity helper (`make install-agy`) or run the command |
 | Keyring locked, start agy once and unlock it | With automatic login the keyring stays locked; start `agy` once and type your password |
-| No update since … | The helper timer is not running: `systemctl --user status agy-usage.timer` |
-| agy /usage: … | agy changed its `/usage` screen; see `journalctl --user -u agy-usage.service` |
+| tmux not found, agy not found | Install tmux (`sudo apt install tmux`) or agy; agy is looked up in `PATH` and `~/.local/bin` |
+| No update since … | The helper has not read agy for 6 hours: `systemctl --user status agy-usage.timer` and `journalctl --user -u agy-usage.service` |
+| agy /usage: … | agy changed its `/usage` screen or could not start; see `journalctl --user -u agy-usage.service` |
 
 Logs: `journalctl -f -o cat /usr/bin/gnome-shell`
 

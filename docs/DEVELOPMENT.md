@@ -27,6 +27,7 @@ Not shipped in the zip:
 | `.github/workflows/release.yml` | Builds the zip and publishes a GitHub release for every `v*` tag |
 | `CHANGELOG.md` | Release notes, newest first |
 | `antigravity/agy-usage-snapshot` | Helper that reads agy's `/usage` screen into `~/.cache/agy-usage/usage.json` (Python 3, standard library only) |
+| `antigravity/test_agy_usage_snapshot.py` | Tests of the helper's parser and checks, with a saved `/usage` screen (`make test-agy`) |
 | `antigravity/agy-usage.service`, `.timer` | systemd user units that run the helper, installed by `make install-agy` |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the data is fetched.
@@ -42,6 +43,7 @@ make pack      # dist/<uuid>.shell-extension.zip (zip of build/)
 make install   # pack + gnome-extensions install --force
 make install-agy    # Antigravity helper + its user timer, first reading
 make uninstall-agy  # remove them again
+make test-agy       # tests of the helper (Python standard library)
 make lint      # pack + shexli (EGO static analyzer)
 make version   # print the current version
 make release VERSION=1.1   # set the version, date the changelog, lint

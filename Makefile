@@ -2,7 +2,7 @@ UUID = ai-usage-tracker@salihmarangoz.github.io
 ZIP = dist/$(UUID).shell-extension.zip
 SHEXLI = $(shell command -v shexli || echo .venv/bin/shexli)
 
-.PHONY: build pack install install-agy uninstall-agy lint version release clean
+.PHONY: build pack install install-agy uninstall-agy test-agy lint version release clean
 
 node_modules: package.json
 	npm install
@@ -22,6 +22,7 @@ install: pack
 	gnome-extensions install --force $(ZIP)
 
 install-agy:
+	@command -v tmux >/dev/null || { echo "agy-usage-snapshot needs tmux: sudo apt install tmux"; exit 1; }
 	install -D -m 755 antigravity/agy-usage-snapshot ~/.local/bin/agy-usage-snapshot
 	install -D -m 644 -t ~/.config/systemd/user antigravity/agy-usage.service antigravity/agy-usage.timer
 	systemctl --user daemon-reload
@@ -32,6 +33,9 @@ uninstall-agy:
 	-systemctl --user disable --now agy-usage.timer
 	rm -f ~/.config/systemd/user/agy-usage.service ~/.config/systemd/user/agy-usage.timer ~/.local/bin/agy-usage-snapshot
 	systemctl --user daemon-reload
+
+test-agy:
+	python3 -I -m unittest discover -s antigravity
 
 lint: pack
 	$(SHEXLI) $(ZIP)

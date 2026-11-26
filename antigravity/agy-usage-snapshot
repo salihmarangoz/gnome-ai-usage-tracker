@@ -10,15 +10,17 @@ Without --force it only starts agy when something can have changed: agy was
 used since the last snapshot, a limit has reset, the last try failed, or the
 snapshot is older than MAX_AGE. agy-usage.timer runs it every 10 minutes.
 
-It does not start agy while the GNOME login keyring is locked, because agy
-would then show the keyring password prompt.
+It does nothing while GNOME Shell does not show an Antigravity service of
+AI Usage Tracker, and it starts agy only while the default keyring is
+unlocked, because agy would otherwise show the keyring password prompt.
 
-Needs: agy (tested with 1.5.17), tmux, busctl.
+Needs: agy (tested with 1.5.17), tmux, busctl, gsettings.
 """
 import fcntl
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -32,7 +34,10 @@ STATE = Path(os.environ.get("XDG_CACHE_HOME") or HOME / ".cache") / "agy-usage"
 WORKSPACE = STATE / "ws"          # empty folder agy is started in
 LOG = STATE / "log/agy.log"       # agy's log for our runs, kept out of AGY_DIR
 OUT = STATE / "usage.json"
-TMUX = ["tmux", "-L", "agy-usage"]
+TMUX = ["tmux", "-L", "agy-usage", "-f", "/dev/null"]  # not the user's tmux.conf
+UUID = "ai-usage-tracker@salihmarangoz.github.io"
+SCHEMA = "org.gnome.shell.extensions.ai-usage-tracker"
+KEYRING_ERROR = "Keyring locked, start agy once and unlock it"
 MAX_AGE = 3 * 3600
 WINDOW_SECONDS = {"weekly": 7 * 86400, "five hour": 5 * 3600, "daily": 86400}
 
@@ -43,9 +48,16 @@ def log(msg):
 
 def load_previous():
     try:
-        return json.loads(OUT.read_text())
+        prev = json.loads(OUT.read_text())
     except (OSError, ValueError):
         return {}
+    if not isinstance(prev, dict):
+        return {}
+    groups = prev.get("groups") or []
+    if not (isinstance(groups, list) and all(
+            isinstance(g, dict) and isinstance(g.get("windows"), list) for g in groups)):
+        return {}
+    return prev
 
 
 def write_snapshot(data):
@@ -68,10 +80,11 @@ def last_agy_activity():
 def needs_update(prev, now):
     updated = prev.get("updated", 0)
     activity = last_agy_activity()
+    if prev.get("error") == KEYRING_ERROR:
+        return "the keyring was locked"  # main() checks it again, without agy
     if prev.get("error"):
         failed = prev.get("errorAt", 0)
-        # After a failure wait an hour unless agy was used since, which is
-        # also how a locked keyring gets unlocked
+        # After a failure wait an hour unless agy was used since
         if now - failed < 3600 and activity <= failed:
             return None
         return "the last try failed"
@@ -88,16 +101,38 @@ def needs_update(prev, now):
     return None
 
 
-def keyring_locked():
+def run(*args):
+    """stdout of a command, or None if it failed or is missing."""
     try:
-        out = subprocess.run(
-            ["busctl", "--user", "get-property", "org.freedesktop.secrets",
-             "/org/freedesktop/secrets/collection/login",
-             "org.freedesktop.Secret.Collection", "Locked"],
-            capture_output=True, text=True, timeout=10).stdout
+        r = subprocess.run(args, capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def keyring_unlocked():
+    """True only if the Secret Service says the default keyring is unlocked."""
+    return run("busctl", "--user", "get-property", "org.freedesktop.secrets",
+               "/org/freedesktop/secrets/aliases/default",
+               "org.freedesktop.Secret.Collection", "Locked") == "b false"
+
+
+def extension_shows_agy():
+    """Whether GNOME Shell runs the extension with an Antigravity service on."""
+    if run("gsettings", "get", "org.gnome.shell", "disable-user-extensions") != "false":
         return False
-    return out.strip() == "b true"
+    if f"'{UUID}'" not in (run("gsettings", "get", "org.gnome.shell", "enabled-extensions") or ""):
+        return False
+    data_dirs = [os.environ.get("XDG_DATA_HOME") or str(HOME / ".local/share"),
+                 *(os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share").split(":")]
+    for data_dir in data_dirs:
+        schemas = Path(data_dir) / "gnome-shell/extensions" / UUID / "schemas"
+        if (schemas / "gschemas.compiled").exists():
+            break
+    else:
+        return False
+    return any(run("gsettings", "--schemadir", str(schemas), "get", SCHEMA, f"{service}-show")
+               not in (None, "'off'") for service in ("agy-gemini", "agy-claude"))
 
 
 def tmux(*args, check=False):
@@ -131,7 +166,7 @@ def read_usage_screen():
     LOG.unlink(missing_ok=True)
     tmux("kill-server")
     tmux("new-session", "-d", "-s", "u", "-x", "200", "-y", "80",
-         "-c", str(WORKSPACE), f"{AGY} --log-file {LOG}", check=True)
+         "-c", str(WORKSPACE), shlex.join([AGY, "--log-file", str(LOG)]), check=True)
     try:
         boot = None
         trusted = dismissed = False
@@ -140,8 +175,10 @@ def read_usage_screen():
             lines = screen()
             if not lines and tmux("has-session", "-t", "u").returncode:
                 raise RuntimeError("agy exited at start")
-            if has(lines, r"(?i)not signed in|not logged in|sign in with google"):
-                raise RuntimeError("agy is not signed in")
+            signed_out = [l for l in lines
+                          if re.search(r"(?i)not signed in|not logged in|sign in with google", l)]
+            if signed_out:
+                raise RuntimeError(f"agy is not signed in ({signed_out[0].strip()})")
             if not trusted and has(lines, r"Do you trust the contents"):
                 # Our own empty folder; Enter picks the first choice, "Yes"
                 tmux("send-keys", "-t", "u", "Enter")
@@ -181,31 +218,41 @@ def read_usage_screen():
 
 def parse_duration(text):
     units = {"d": 86400, "h": 3600, "m": 60, "s": 1}
-    parts = re.findall(r"(\d+)\s*([dhms])\b", text)
+    parts = re.findall(r"(\d+)\s*([dhms])(?![a-z])", text)
     return sum(int(n) * units[u] for n, u in parts) if parts else None
 
 
 def parse(boot, lines, now):
+    """Return the plan and the limit groups; raise on anything unexpected.
+
+    A group starts at the line above "Models within this group:", so a
+    renamed heading gives a new group instead of adding its limits to the
+    group above it.
+    """
     plan = None
     for line in boot:
         m = re.search(r"@\S+\s+\(([^()]+)\)\s*$", line)
         if m:
             plan = m.group(1)
+    lines = [raw.strip(" │") for raw in lines]
     groups, group, window = [], None, None
-    for raw in lines:
-        line = raw.strip(" │")
-        m = re.fullmatch(r"([A-Z][A-Z0-9 &/]+) MODELS", line)
-        if m:
-            group = {"name": m.group(1), "windows": [],
-                     "id": re.sub(r"[^a-z0-9]+", "-", m.group(1).lower()).strip("-")}
+    for i, line in enumerate(lines):
+        if lines[i + 1:i + 2] and lines[i + 1].startswith("Models within this group"):
+            name = re.sub(r"(?i)\s*models$", "", line)
+            group_id = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+            if not group_id or any(g["id"] == group_id for g in groups):
+                raise RuntimeError(f"unexpected model group heading {line!r}")
+            group = {"name": name, "windows": [], "id": group_id}
             groups.append(group)
             window = None
             continue
         m = re.fullmatch(r"(.+?) Limit Remaining", line)
-        if m and group is not None:
+        if m:
             kind = m.group(1).lower()
-            window = {"name": "5-hour" if kind == "five hour" else m.group(1),
-                      "seconds": WINDOW_SECONDS.get(kind),
+            name = "5-hour" if kind == "five hour" else m.group(1)
+            if group is None or any(w["name"] == name for w in group["windows"]):
+                raise RuntimeError(f"unexpected {line!r}")
+            window = {"name": name, "seconds": WINDOW_SECONDS.get(kind),
                       "remaining": None, "resetsAt": None}
             group["windows"].append(window)
             continue
@@ -214,6 +261,8 @@ def parse(boot, lines, now):
         m = re.search(r"\]\s*(\d+(?:\.\d+)?)%", line)
         if m and window["remaining"] is None:
             window["remaining"] = float(m.group(1))
+            if window["remaining"] > 100:
+                raise RuntimeError(f"{group['name']} {window['name']}: {line}")
             continue
         if line.startswith("Refreshes in"):
             seconds = parse_duration(line)
@@ -223,7 +272,9 @@ def parse(boot, lines, now):
         elif line.startswith("Quota available"):
             window = None
     for g in groups:
-        g["windows"] = [w for w in g["windows"] if w["remaining"] is not None]
+        for w in g["windows"]:
+            if w["remaining"] is None:
+                raise RuntimeError(f"no percentage for {g['name']} {w['name']}")
     groups = [g for g in groups if g["windows"]]
     if not groups:
         raise RuntimeError("could not read any limit from the /usage screen")
@@ -257,28 +308,32 @@ def drop_our_history():
 
 def main():
     force = "--force" in sys.argv[1:]
+    os.umask(0o077)
     STATE.mkdir(parents=True, exist_ok=True)
+    STATE.chmod(0o700)
     with open(STATE / "lock", "w") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             log("another run is going on")
             return 0
+        if not force and not extension_shows_agy():
+            return 0
         now = time.time()
         prev = load_previous()
         reason = "forced" if force else needs_update(prev, now)
         if not reason:
             return 0
-        if not AGY:
-            prev.update(error="agy not found", errorAt=int(now))
+        if not AGY or not shutil.which("tmux"):
+            missing = "agy" if not AGY else "tmux"
+            prev.update(error=f"{missing} not found", errorAt=int(now))
             write_snapshot(prev)
-            log("agy not found in PATH or ~/.local/bin")
+            log(f"{missing} not found in PATH" + (" or ~/.local/bin" if not AGY else ""))
             return 1
-        if keyring_locked():
-            prev.update(error="Keyring locked, start agy once and unlock it",
-                        errorAt=int(now))
+        if not keyring_unlocked():
+            prev.update(error=KEYRING_ERROR, errorAt=int(now))
             write_snapshot(prev)
-            log("keyring locked, agy not started")
+            log("keyring locked or not reachable, agy not started")
             return 0
         log(f"reading /usage ({reason})")
         try:
