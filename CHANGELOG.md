@@ -10,6 +10,8 @@ turns that section into a dated release.
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-11-26
+
 ### Fixed
 
 - Antigravity: a changed group heading on agy's `/usage` screen no longer puts
